@@ -268,7 +268,10 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
         }
         ((GetOperation) fop).setValue(m.value);
         logger.warning(
-            "Getprocess finished found " + ((GetOperation) fop).getValue() + " hops " + fop.nrHops);
+            "Getprocess finished found "
+                + ((GetOperation) fop).getValue()
+                + " hops "
+                + fop.getHops());
       }
 
       // Send as many ROUTE requests as possible (according to the ALPHA parameter)
