@@ -4,14 +4,12 @@ import java.math.BigInteger;
 
 /** A Kademlia node, identified by its ID, IP address and port. */
 public class GossipNode implements Comparable<GossipNode> {
-  
+
   private BigInteger id;
 
   public GossipNode(BigInteger id) {
     this.id = id;
-
   }
-
 
   public BigInteger getId() {
     return this.id;
@@ -57,9 +55,7 @@ public class GossipNode implements Comparable<GossipNode> {
     if (this.id.compareTo(n.id) != 0) {
       return this.id.compareTo(n.id);
     }
-   
+
     return 0;
   }
-
-
 }

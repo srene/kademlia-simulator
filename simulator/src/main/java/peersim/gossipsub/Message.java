@@ -2,7 +2,7 @@ package peersim.gossipsub;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import peersim.kademlia.SimpleEvent;
 
 /**
  * Message class provide all functionalities to magage the various messages, principally LOOKUP
@@ -33,6 +33,22 @@ public class Message extends SimpleEvent {
 
   /** Message Type: PING (used to verify that a node is still alive) */
   public static final int MSG_EMPTY = 0;
+
+  public static final int MSG_GRAFT = 1;
+
+  public static final int MSG_PRUNE = 2;
+
+  public static final int MSG_IHAVE = 3;
+
+  public static final int MSG_IWANT = 4;
+
+  public static final int MSG_JOIN = 5;
+
+  public static final int MSG_LEAVE = 6;
+
+  public static final int MSG_SUBSCRIBE = 7;
+
+  public static final int MSG_UNSUBSCRIBE = 8;
 
   // ______________________________________________________________________________________________
   /** This Object contains the body of the message, no matter what it contains */
