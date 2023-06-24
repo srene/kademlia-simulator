@@ -1,7 +1,9 @@
 package peersim.gossipsub;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -50,7 +52,11 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
 
   private HashMap<String, List<BigInteger>> fanout;
 
-  private MCache cache;
+  private HashMap<String, Long> fanoutExpirations;
+
+  private MCache mCache;
+
+  private HashMap<String, List<BigInteger>> cache;
 
   /**
    * Replicate this object by returning an identical copy. It is called by the initializer and do
@@ -77,6 +83,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
 
     tid = Configuration.getPid(prefix + "." + PAR_TRANSPORT);
 
+    peers = new PeerTable();
     // System.out.println("New kademliaprotocol");
   }
 
@@ -265,12 +272,61 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
     }
   }
 
-  public void heartBeat(){
+  public void heartBeat() {
 
-    for(String topic : mesh.keySet()){
-        if(mesh.get(topic).size()<GossipCommonConfig.D_low){
-
+    for (String topic : mesh.keySet()) {
+      if (mesh.get(topic).size() < GossipCommonConfig.D_low) {
+        List<BigInteger> nodes =
+            peers.getNPeers(topic, GossipCommonConfig.D - mesh.get(topic).size(), mesh.get(topic));
+        mesh.get(topic).addAll(nodes);
+        for (BigInteger id : nodes) {
+          sendGraftMessage(id);
         }
+      }
+      if (mesh.get(topic).size() > GossipCommonConfig.D_high) {
+        List<BigInteger> nodes = mesh.get(topic);
+        for (int i = 0; i < GossipCommonConfig.D_high - mesh.get(topic).size(); i++) {
+          BigInteger node = nodes.get(CommonState.r.nextInt(nodes.size()));
+          nodes.remove(node);
+          sendPruneMessage(node);
+        }
+      }
+    }
+    for (String topic : fanout.keySet()) {
+
+      if (fanoutExpirations.get(topic) > CommonState.getTime()) {
+        fanout.remove(topic);
+        fanoutExpirations.remove(topic);
+      } else {
+        if (fanout.get(topic).size() < GossipCommonConfig.D) {
+          List<BigInteger> nodes =
+              peers.getNPeers(
+                  topic, GossipCommonConfig.D - mesh.get(topic).size(), mesh.get(topic));
+          fanout.get(topic).addAll(nodes);
+        }
+      }
+    }
+    HashSet<String> allTopics = new HashSet<>();
+    allTopics.addAll(mesh.keySet());
+    allTopics.addAll(fanout.keySet());
+
+    for (String topic : allTopics) {
+
+      List<BigInteger> msgs = cache.get(topic);
+      if (msgs != null) {
+        List<BigInteger> ids = peers.getPeers(topic);
+
+        Collections.shuffle(ids);
+
+        int sent = 0;
+        for (BigInteger id : ids) {
+          if (!mesh.get(topic).contains(id) && !fanout.get(topic).contains(id)) {
+            sendIHaveMessage(node, msgs);
+            sent++;
+          }
+          if (sent++ == GossipCommonConfig.D) break;
+        }
+      }
     }
   }
 

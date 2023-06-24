@@ -13,9 +13,13 @@ public class GossipCommonConfig {
   public static int BITS = 256;
 
   /** Dimension of k-buckets */
-  public static int D_low = 6;
+  public static int D_low = 4;
+
+  public static int D = 6;
 
   public static int D_high = 8;
+
+  public static int ttl = 60000;
   /**
    * Provides short information about current Kademlia configuration
    *
