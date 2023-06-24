@@ -44,7 +44,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
   /** Logging handler. */
   protected Logger logger;
 
-  private List<BigInteger> peers;
+  private PeerTable peers;
 
   private HashMap<String, List<BigInteger>> mesh;
 
@@ -267,6 +267,11 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
 
   public void heartBeat(){
 
+    for(String topic : mesh.keySet()){
+        if(mesh.get(topic).size()<GossipCommonConfig.D_low){
+
+        }
+    }
   }
 
   @Override

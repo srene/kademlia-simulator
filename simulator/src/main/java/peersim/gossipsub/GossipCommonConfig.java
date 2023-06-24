@@ -13,26 +13,15 @@ public class GossipCommonConfig {
   public static int BITS = 256;
 
   /** Dimension of k-buckets */
-  public static int K = 16;
+  public static int D_low = 6;
 
-  /** Number of simultaneous lookup messages */
-  public static int ALPHA = 3;
-
-  /** Number of buckets in the routing table */
-  public static int NBUCKETS = 256;
-
-  /** Number of items in the replacement list for each bucket */
-  public static int MAXREPLACEMENT = 10;
-
-  /** Find mode: 0 find by node id / 1 find by distance to node */
-  public static int FINDMODE = 1;
-
+  public static int D_high = 8;
   /**
    * Provides short information about current Kademlia configuration
    *
    * @return a string containing the current configuration
    */
   public static String info() {
-    return String.format("[K=%d][ALPHA=%d][BITS=%d]", K, ALPHA, BITS);
+    return String.format("[D_low=%d][D_high=%d][BITS=%d]", D_low, D_high, BITS);
   }
 }
