@@ -13,7 +13,6 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
-import peersim.core.Control;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
@@ -21,7 +20,7 @@ import peersim.kademlia.KademliaProtocol;
 import peersim.kademlia.SimpleEvent;
 import peersim.transport.UnreliableTransport;
 
-public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
+public class GossipSubProtocol implements Cloneable, EDProtocol {
 
   /** Prefix for configuration parameters. */
   private static String prefix = null;
@@ -85,6 +84,11 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
     tid = Configuration.getPid(prefix + "." + PAR_TRANSPORT);
 
     peers = new PeerTable();
+
+    mesh = new HashMap<>();
+
+    fanout = new HashMap<>();
+
     // System.out.println("New kademliaprotocol");
   }
 
@@ -285,22 +289,25 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
     // Handle the event based on its type.
     switch (((SimpleEvent) event).getType()) {
       case Message.MSG_JOIN:
-
         m = (Message) event;
         // sentMsg.remove(m.ackId);
         handleJoin(m, pid);
         break;
       case Message.MSG_LEAVE:
-
         m = (Message) event;
         // sentMsg.remove(m.ackId);
         handleLeave(m, pid);
         break;
+
+      case Message.MSG_PUBLISH:
+        m = (Message) event;
+        handleMessage(m, pid);
+        break;
     }
   }
 
-  private void heartBeat() {
-
+  public void heartBeat() {
+    logger.warning("heartbeat execute");
     for (String topic : mesh.keySet()) {
       if (mesh.get(topic).size() < GossipCommonConfig.D_low) {
         List<BigInteger> nodes =
@@ -392,9 +399,9 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
   }
 
   private void handleLeave(Message m, int myPid) {
-      String topic = (String) m.body;
-      logger.warning("Handleleave received " + topic);
-      if (mesh.get(topic) != null) {
+    String topic = (String) m.body;
+    logger.warning("Handleleave received " + topic);
+    if (mesh.get(topic) != null) {
       List<BigInteger> p = mesh.get(topic);
       for (BigInteger id : p) {
         sendPruneMessage(id);
@@ -402,13 +409,12 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
     }
   }
 
-  public PeerTable getTable() {
-    return this.peers;
+  private void handleMessage(Message m, int myPid) {
+    logger.warning("Publish message");
+    mCache.put((BigInteger) m.body, m.value);
   }
 
-  @Override
-  public boolean execute() {
-    heartBeat();
-    return false;
+  public PeerTable getTable() {
+    return this.peers;
   }
 }

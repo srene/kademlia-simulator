@@ -48,9 +48,7 @@ public class Message extends SimpleEvent {
 
   public static final int MSG_LEAVE = 6;
 
-  public static final int MSG_SUBSCRIBE = 7;
-
-  public static final int MSG_UNSUBSCRIBE = 8;
+  public static final int MSG_PUBLISH = 7;
 
   // ______________________________________________________________________________________________
   /** This Object contains the body of the message, no matter what it contains */
@@ -176,6 +174,10 @@ public class Message extends SimpleEvent {
 
   public static final Message makePruneMessage() {
     return new Message(MSG_PRUNE);
+  }
+
+  public static final Message makePublishMessage(BigInteger id, Object value) {
+    return new Message(MSG_PUBLISH, id, value);
   }
   // ______________________________________________________________________________________________
   public String typeToString() {
