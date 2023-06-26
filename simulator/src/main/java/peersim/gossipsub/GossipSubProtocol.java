@@ -158,20 +158,19 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
     return nodeIdtoNode(this.getGossipNode().getId());
   }
 
-
-  private void sendGraftMessage(BigInteger id){
+  private void sendGraftMessage(BigInteger id) {
     Message m = Message.makeInitJoinMessage(id);
-    sendMessage(m,id,gossipid);
+    sendMessage(m, id, gossipid);
   }
 
-  private void sendIHaveMessage(BigInteger id){
-    Message m = Message.makeIHaveMessage();
-    sendMessage(m,id,gossipid);
+  private void sendIHaveMessage(BigInteger id, List<BigInteger> ids) {
+    Message m = Message.makeIHaveMessage(ids);
+    sendMessage(m, id, gossipid);
   }
 
-  private void sendPruneMessage(BigInteger id){
+  private void sendPruneMessage(BigInteger id) {
     Message m = Message.makePruneMessage();
-    sendMessage(m,id,gossipid);
+    sendMessage(m, id, gossipid);
   }
   /**
    * Sends a message using the current transport layer and starts the timeout timer if the message
@@ -286,11 +285,16 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
     // Handle the event based on its type.
     switch (((SimpleEvent) event).getType()) {
       case Message.MSG_JOIN:
-        // Handle a response message by removing it from the sentMsg map and calling
-        // handleResponse().
+
         m = (Message) event;
         // sentMsg.remove(m.ackId);
         handleJoin(m, pid);
+        break;
+      case Message.MSG_LEAVE:
+
+        m = (Message) event;
+        // sentMsg.remove(m.ackId);
+        handleLeave(m, pid);
         break;
     }
   }
@@ -344,7 +348,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
         int sent = 0;
         for (BigInteger id : ids) {
           if (!mesh.get(topic).contains(id) && !fanout.get(topic).contains(id)) {
-            sendIHaveMessage(node, msgs);
+            sendIHaveMessage(id, msgs);
             sent++;
           }
           if (sent++ == GossipCommonConfig.D) break;
@@ -357,43 +361,50 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
     String topic = (String) m.body;
     logger.warning("Handlejoin received " + topic);
 
-    if(mesh.get(topic)!=null)return;
-    if(fanout.get(topic)!=null){
+    if (mesh.get(topic) != null) return;
+    if (fanout.get(topic) != null) {
       List<BigInteger> p = fanout.get(topic);
-      mesh.put(topic,p);
+      mesh.put(topic, p);
       fanout.remove(topic);
-      if(p.size()<GossipCommonConfig.D){
+      if (p.size() < GossipCommonConfig.D) {
         List<BigInteger> p2 = peers.getPeers(topic);
-        for(BigInteger id : p2){
-          if(mesh.get(topic).size()>=GossipCommonConfig.D)break;
+        for (BigInteger id : p2) {
+          if (mesh.get(topic).size() >= GossipCommonConfig.D) break;
           mesh.get(topic).add(id);
         }
       }
-    } else if(mesh.get(topic)==null){
-        List<BigInteger> p = peers.getPeers(topic);
-        if(p!=null){
-          mesh.put(topic,new ArrayList<BigInteger>());
-          for(BigInteger id : p){
-            if(mesh.get(topic).size()>=GossipCommonConfig.D)break;
-            mesh.get(topic).add(id);
-          }
+    } else if (mesh.get(topic) == null) {
+      List<BigInteger> p = peers.getPeers(topic);
+      if (p != null) {
+        mesh.put(topic, new ArrayList<BigInteger>());
+        for (BigInteger id : p) {
+          if (mesh.get(topic).size() >= GossipCommonConfig.D) break;
+          mesh.get(topic).add(id);
         }
+      }
     }
-    if(mesh.get(topic)!=null){
+    if (mesh.get(topic) != null) {
       List<BigInteger> p = mesh.get(topic);
-      for(BigInteger id : p){
+      for (BigInteger id : p) {
         sendGraftMessage(id);
       }
     }
-
   }
 
-  private void handleLeave(Message m, int myPid) {}
+  private void handleLeave(Message m, int myPid) {
+      String topic = (String) m.body;
+      logger.warning("Handleleave received " + topic);
+      if (mesh.get(topic) != null) {
+      List<BigInteger> p = mesh.get(topic);
+      for (BigInteger id : p) {
+        sendPruneMessage(id);
+      }
+    }
+  }
 
   public PeerTable getTable() {
     return this.peers;
   }
-
 
   @Override
   public boolean execute() {

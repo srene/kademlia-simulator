@@ -1,6 +1,8 @@
 package peersim.gossipsub;
 
+import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import peersim.kademlia.SimpleEvent;
 
@@ -168,8 +170,8 @@ public class Message extends SimpleEvent {
     return new Message(MSG_GRAFT);
   }
 
-  public static final Message makeIHaveMessage() {
-    return new Message(MSG_IHAVE);
+  public static final Message makeIHaveMessage(List<BigInteger> ids) {
+    return new Message(MSG_IHAVE, ids);
   }
 
   public static final Message makePruneMessage() {
