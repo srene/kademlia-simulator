@@ -1,6 +1,7 @@
 package peersim.gossipsub;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -107,7 +108,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
    * @param searchNodeId the ID of the node to search for
    * @return the node with the given ID, or null if not found
    */
-  public Node nodeIdtoNode(BigInteger searchNodeId) {
+  private Node nodeIdtoNode(BigInteger searchNodeId) {
     // If the given searchNodeId is null, return null
     if (searchNodeId == null) return null;
 
@@ -157,6 +158,21 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
     return nodeIdtoNode(this.getGossipNode().getId());
   }
 
+
+  private void sendGraftMessage(BigInteger id){
+    Message m = Message.makeInitJoinMessage(id);
+    sendMessage(m,id,gossipid);
+  }
+
+  private void sendIHaveMessage(BigInteger id){
+    Message m = Message.makeIHaveMessage();
+    sendMessage(m,id,gossipid);
+  }
+
+  private void sendPruneMessage(BigInteger id){
+    Message m = Message.makePruneMessage();
+    sendMessage(m,id,gossipid);
+  }
   /**
    * Sends a message using the current transport layer and starts the timeout timer if the message
    * is a request.
@@ -269,10 +285,17 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
 
     // Handle the event based on its type.
     switch (((SimpleEvent) event).getType()) {
+      case Message.MSG_JOIN:
+        // Handle a response message by removing it from the sentMsg map and calling
+        // handleResponse().
+        m = (Message) event;
+        // sentMsg.remove(m.ackId);
+        handleJoin(m, pid);
+        break;
     }
   }
 
-  public void heartBeat() {
+  private void heartBeat() {
 
     for (String topic : mesh.keySet()) {
       if (mesh.get(topic).size() < GossipCommonConfig.D_low) {
@@ -329,6 +352,48 @@ public class GossipSubProtocol implements Cloneable, EDProtocol, Control {
       }
     }
   }
+
+  private void handleJoin(Message m, int myPid) {
+    String topic = (String) m.body;
+    logger.warning("Handlejoin received " + topic);
+
+    if(mesh.get(topic)!=null)return;
+    if(fanout.get(topic)!=null){
+      List<BigInteger> p = fanout.get(topic);
+      mesh.put(topic,p);
+      fanout.remove(topic);
+      if(p.size()<GossipCommonConfig.D){
+        List<BigInteger> p2 = peers.getPeers(topic);
+        for(BigInteger id : p2){
+          if(mesh.get(topic).size()>=GossipCommonConfig.D)break;
+          mesh.get(topic).add(id);
+        }
+      }
+    } else if(mesh.get(topic)==null){
+        List<BigInteger> p = peers.getPeers(topic);
+        if(p!=null){
+          mesh.put(topic,new ArrayList<BigInteger>());
+          for(BigInteger id : p){
+            if(mesh.get(topic).size()>=GossipCommonConfig.D)break;
+            mesh.get(topic).add(id);
+          }
+        }
+    }
+    if(mesh.get(topic)!=null){
+      List<BigInteger> p = mesh.get(topic);
+      for(BigInteger id : p){
+        sendGraftMessage(id);
+      }
+    }
+
+  }
+
+  private void handleLeave(Message m, int myPid) {}
+
+  public PeerTable getTable() {
+    return this.peers;
+  }
+
 
   @Override
   public boolean execute() {

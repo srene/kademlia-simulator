@@ -160,6 +160,21 @@ public class Message extends SimpleEvent {
     return dolly;
   }
 
+  public static final Message makeInitJoinMessage(Object body) {
+    return new Message(MSG_JOIN, body);
+  }
+
+  public static final Message makeGraftMessage() {
+    return new Message(MSG_GRAFT);
+  }
+
+  public static final Message makeIHaveMessage() {
+    return new Message(MSG_IHAVE);
+  }
+
+  public static final Message makePruneMessage() {
+    return new Message(MSG_PRUNE);
+  }
   // ______________________________________________________________________________________________
   public String typeToString() {
     switch (type) {
