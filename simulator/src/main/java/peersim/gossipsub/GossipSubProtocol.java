@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import org.checkerframework.checker.units.qual.m;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Network;
@@ -94,6 +95,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     fanout = new HashMap<>();
 
+    mCache = new MCache();
     // System.out.println("New kademliaprotocol");
   }
 
@@ -467,8 +469,9 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
   private void handleIWant(Message m, int myPid) {}
 
   private void handleMessage(Message m, int myPid) {
-    logger.warning("Publish message");
-    mCache.put((BigInteger) m.body, m.value, heartbeat * 6);
+    BigInteger id = (BigInteger) m.body;
+    logger.warning("Publish message " + id);
+    mCache.put((BigInteger) m.body, m.value, GossipCommonConfig.ttl);
   }
 
   public PeerTable getTable() {

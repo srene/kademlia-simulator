@@ -8,6 +8,7 @@ import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDSimulator;
 import peersim.kademlia.das.Block;
+import peersim.kademlia.das.Sample;
 
 /**
  * This control generates samples every 5 min that are stored in a single node (builder) and starts
@@ -41,6 +42,8 @@ public class TrafficGeneratorSample implements Control {
 
   private boolean first = true, second = false;
 
+  private long ID_GENERATOR = 0;
+
   // ______________________________________________________________________________________________
   public TrafficGeneratorSample(String prefix) {
 
@@ -65,6 +68,7 @@ public class TrafficGeneratorSample implements Control {
         GossipSubProtocol prot = (GossipSubProtocol) n.getProtocol(protocol);
         BigInteger id = prot.getGossipNode().getId();
         if (i == 0) {
+          System.out.println("Builder " + id);
           for (int j = 1; j <= GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
             EDSimulator.add(0, Message.makeInitJoinMessage("Row" + j), n, protocol);
             EDSimulator.add(0, Message.makeInitJoinMessage("Column" + j), n, protocol);
@@ -100,8 +104,18 @@ public class TrafficGeneratorSample implements Control {
       }
 
     } else {
+      Block b = new Block(GossipCommonConfig.BLOCK_DIM_SIZE, ID_GENERATOR);
 
+      Node n = Network.get(0);
+
+      for (int i = 0; i < GossipCommonConfig.BLOCK_DIM_SIZE; i++) {
+        for (int j = 0; j < GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
+          Sample s = b.getSample(i, j);
+          EDSimulator.add(0, Message.makePublishMessage(s.getId(), s), n, protocol);
+        }
+      }
       second = false;
+      ID_GENERATOR++;
     }
     return false;
   }
