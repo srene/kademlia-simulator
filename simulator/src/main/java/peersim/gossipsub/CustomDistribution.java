@@ -34,6 +34,7 @@ public class CustomDistribution implements peersim.core.Control {
    */
   public boolean execute() {
     // BigInteger tmp;
+
     for (int i = 0; i < Network.size(); ++i) {
       Node generalNode = Network.get(i);
       BigInteger id;

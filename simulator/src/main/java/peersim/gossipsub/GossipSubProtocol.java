@@ -16,7 +16,6 @@ import peersim.core.CommonState;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
-import peersim.kademlia.KademliaProtocol;
 import peersim.kademlia.SimpleEvent;
 import peersim.transport.UnreliableTransport;
 
@@ -30,6 +29,8 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
   /** The parameter name for transport. */
   private static final String PAR_TRANSPORT = "transport";
+
+  private static final String PAR_HEARTBEAT = "heartbeat";
 
   /** Identifier for the tranport protocol (used in the sendMessage method) */
   private int tid;
@@ -58,6 +59,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
   private HashMap<String, List<BigInteger>> cache;
 
+  private long heartbeat;
   /**
    * Replicate this object by returning an identical copy. It is called by the initializer and do
    * not fill any particular field.
@@ -83,6 +85,9 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     tid = Configuration.getPid(prefix + "." + PAR_TRANSPORT);
 
+    heartbeat = Configuration.getLong(prefix + "." + PAR_HEARTBEAT);
+
+    cache = new HashMap<>();
     peers = new PeerTable();
 
     mesh = new HashMap<>();
@@ -128,7 +133,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
       // Get the ID of the node at the midpoint
       BigInteger mId =
-          ((KademliaProtocol) Network.get(m).getProtocol(gossipid)).getKademliaNode().getId();
+          ((GossipSubProtocol) Network.get(m).getProtocol(gossipid)).getGossipNode().getId();
 
       // If the midpoint node has the desired ID, return it
       if (mId.equals(searchNodeId)) return Network.get(m);
@@ -144,7 +149,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     // through the network
     BigInteger mId;
     for (int i = Network.size() - 1; i >= 0; i--) {
-      mId = ((KademliaProtocol) Network.get(i).getProtocol(gossipid)).getKademliaNode().getId();
+      mId = ((GossipSubProtocol) Network.get(i).getProtocol(gossipid)).getGossipNode().getId();
       if (mId.equals(searchNodeId)) return Network.get(i);
     }
 
@@ -162,18 +167,26 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     return nodeIdtoNode(this.getGossipNode().getId());
   }
 
-  private void sendGraftMessage(BigInteger id) {
-    Message m = Message.makeInitJoinMessage(id);
+  private void sendGraftMessage(BigInteger id, String topic) {
+    Message m = Message.makeGraftMessage(topic);
+    m.src = this.node;
+    m.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(gossipid)).getGossipNode();
     sendMessage(m, id, gossipid);
   }
 
-  private void sendIHaveMessage(BigInteger id, List<BigInteger> ids) {
-    Message m = Message.makeIHaveMessage(ids);
+  private void sendIHaveMessage(String topic, BigInteger id, List<BigInteger> ids) {
+    Message m = Message.makeIHaveMessage(topic, ids);
     sendMessage(m, id, gossipid);
   }
 
   private void sendPruneMessage(BigInteger id) {
     Message m = Message.makePruneMessage();
+    m.src = this.node;
+    sendMessage(m, id, gossipid);
+  }
+
+  private void sendIWantMessage(String topic, BigInteger id, List<BigInteger> ids) {
+    Message m = Message.makeIWantMessage(topic, ids);
     sendMessage(m, id, gossipid);
   }
   /**
@@ -298,10 +311,25 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         // sentMsg.remove(m.ackId);
         handleLeave(m, pid);
         break;
-
       case Message.MSG_PUBLISH:
         m = (Message) event;
         handleMessage(m, pid);
+        break;
+      case Message.MSG_GRAFT:
+        m = (Message) event;
+        handleGraft(m, pid);
+        break;
+      case Message.MSG_IHAVE:
+        m = (Message) event;
+        handleIHave(m, pid);
+        break;
+      case Message.MSG_IWANT:
+        m = (Message) event;
+        handleIWant(m, pid);
+        break;
+      case Message.MSG_PRUNE:
+        m = (Message) event;
+        handlePrune(m, pid);
         break;
     }
   }
@@ -314,7 +342,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
             peers.getNPeers(topic, GossipCommonConfig.D - mesh.get(topic).size(), mesh.get(topic));
         mesh.get(topic).addAll(nodes);
         for (BigInteger id : nodes) {
-          sendGraftMessage(id);
+          sendGraftMessage(id, topic);
         }
       }
       if (mesh.get(topic).size() > GossipCommonConfig.D_high) {
@@ -355,7 +383,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         int sent = 0;
         for (BigInteger id : ids) {
           if (!mesh.get(topic).contains(id) && !fanout.get(topic).contains(id)) {
-            sendIHaveMessage(id, msgs);
+            sendIHaveMessage(topic, id, msgs);
             sent++;
           }
           if (sent++ == GossipCommonConfig.D) break;
@@ -374,9 +402,9 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
       mesh.put(topic, p);
       fanout.remove(topic);
       if (p.size() < GossipCommonConfig.D) {
-        List<BigInteger> p2 = peers.getPeers(topic);
+        List<BigInteger> p2 =
+            peers.getNPeers(topic, GossipCommonConfig.D - p.size(), mesh.get(topic));
         for (BigInteger id : p2) {
-          if (mesh.get(topic).size() >= GossipCommonConfig.D) break;
           mesh.get(topic).add(id);
         }
       }
@@ -393,7 +421,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     if (mesh.get(topic) != null) {
       List<BigInteger> p = mesh.get(topic);
       for (BigInteger id : p) {
-        sendGraftMessage(id);
+        sendGraftMessage(id, topic);
       }
     }
   }
@@ -409,9 +437,38 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     }
   }
 
+  private void handleGraft(Message m, int myPid) {
+    String topic = (String) m.body;
+    if (mesh.get(topic) != null) {
+      mesh.get(topic).add(m.src.getId());
+    }
+  }
+
+  private void handlePrune(Message m, int myPid) {
+    String topic = (String) m.body;
+    if (mesh.get(topic) != null) {
+      mesh.get(topic).remove(m.src.getId());
+    }
+  }
+
+  private void handleIHave(Message m, int myPid) {
+    String topic = (String) m.body;
+    List<BigInteger> msgIds = (List<BigInteger>) m.value;
+    List<BigInteger> iwants = new ArrayList<>();
+    List<BigInteger> have = cache.get(topic);
+    if (have != null) {
+      for (BigInteger msg : msgIds) {
+        if (!have.contains(msg)) iwants.add(msg);
+      }
+    }
+    if (iwants.size() > 0) sendIWantMessage(topic, null, msgIds);
+  }
+
+  private void handleIWant(Message m, int myPid) {}
+
   private void handleMessage(Message m, int myPid) {
     logger.warning("Publish message");
-    mCache.put((BigInteger) m.body, m.value);
+    mCache.put((BigInteger) m.body, m.value, heartbeat * 6);
   }
 
   public PeerTable getTable() {

@@ -20,6 +20,8 @@ public class GossipCommonConfig {
   public static int D_high = 8;
 
   public static int ttl = 60000;
+
+  public static int BLOCK_DIM_SIZE = 100;
   /**
    * Provides short information about current Kademlia configuration
    *

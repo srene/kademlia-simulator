@@ -164,12 +164,16 @@ public class Message extends SimpleEvent {
     return new Message(MSG_JOIN, body);
   }
 
-  public static final Message makeGraftMessage() {
-    return new Message(MSG_GRAFT);
+  public static final Message makeGraftMessage(String topic) {
+    return new Message(MSG_GRAFT, topic);
   }
 
-  public static final Message makeIHaveMessage(List<BigInteger> ids) {
-    return new Message(MSG_IHAVE, ids);
+  public static final Message makeIHaveMessage(String topic, List<BigInteger> ids) {
+    return new Message(MSG_IHAVE, topic, ids);
+  }
+
+  public static final Message makeIWantMessage(String topic, List<BigInteger> ids) {
+    return new Message(MSG_IWANT, topic, ids);
   }
 
   public static final Message makePruneMessage() {
