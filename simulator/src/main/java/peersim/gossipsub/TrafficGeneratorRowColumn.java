@@ -20,7 +20,7 @@ import peersim.kademlia.das.Sample;
  */
 
 // ______________________________________________________________________________________________
-public class TrafficGeneratorSample implements Control {
+public class TrafficGeneratorRowColumn implements Control {
 
   // ______________________________________________________________________________________________
   /** MSPastry Protocol to act */
@@ -45,7 +45,7 @@ public class TrafficGeneratorSample implements Control {
   private long ID_GENERATOR = 0;
 
   // ______________________________________________________________________________________________
-  public TrafficGeneratorSample(String prefix) {
+  public TrafficGeneratorRowColumn(String prefix) {
 
     GossipCommonConfig.BLOCK_DIM_SIZE =
         Configuration.getInt(prefix + "." + PAR_BLK_DIM_SIZE, GossipCommonConfig.BLOCK_DIM_SIZE);
@@ -77,25 +77,36 @@ public class TrafficGeneratorSample implements Control {
         if (i == 0) {
           System.out.println("Builder " + id);
           for (int j = 1; j <= GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
-            for (int k = 1; k <= GossipCommonConfig.BLOCK_DIM_SIZE; k++) {
-              EDSimulator.add(0, Message.makeInitJoinMessage("Sample" + j + "_" + k), n, protocol);
-            }
+            EDSimulator.add(0, Message.makeInitJoinMessage("Row" + j), n, protocol);
+            EDSimulator.add(0, Message.makeInitJoinMessage("Column" + j), n, protocol);
           }
 
           for (int l = 0; l < Network.size(); l++) {
             Node n2 = Network.get(l);
             GossipSubProtocol prot2 = (GossipSubProtocol) n2.getProtocol(protocol);
-            for (int j = 1; j <= GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
-              for (int k = 1; k <= GossipCommonConfig.BLOCK_DIM_SIZE; k++) {
-                prot2.getTable().addPeer("Sample" + j + "_" + k, id);
-              }
-            }
-            /*for (int m = 1; m <= GossipCommonConfig.BLOCK_DIM_SIZE; m++) {
+            for (int m = 1; m <= GossipCommonConfig.BLOCK_DIM_SIZE; m++) {
               prot2.getTable().addPeer("Row" + m, id);
               prot2.getTable().addPeer("Column" + m, id);
-            }*/
+            }
           }
-        }
+        } /*else {
+            int r1 = CommonState.r.nextInt(GossipCommonConfig.BLOCK_DIM_SIZE) + 1;
+            EDSimulator.add(0, Message.makeInitJoinMessage("Row" + r1), n, protocol);
+            int r2 = CommonState.r.nextInt(GossipCommonConfig.BLOCK_DIM_SIZE) + 1;
+            EDSimulator.add(0, Message.makeInitJoinMessage("Row" + r2), n, protocol);
+            int c1 = CommonState.r.nextInt(GossipCommonConfig.BLOCK_DIM_SIZE) + 1;
+            EDSimulator.add(0, Message.makeInitJoinMessage("Column" + c1), n, protocol);
+            int c2 = CommonState.r.nextInt(GossipCommonConfig.BLOCK_DIM_SIZE) + 1;
+            EDSimulator.add(0, Message.makeInitJoinMessage("Column" + c2), n, protocol);
+            for (int l = 0; l < Network.size(); l++) {
+              Node n2 = Network.get(l);
+              GossipSubProtocol prot2 = (GossipSubProtocol) n2.getProtocol(protocol);
+              prot2.getTable().addPeer("Row" + r1, id);
+              prot2.getTable().addPeer("Row" + r2, id);
+              prot2.getTable().addPeer("Column" + c1, id);
+              prot2.getTable().addPeer("Column" + c2, id);
+            }
+          }*/
       }
 
     } else {

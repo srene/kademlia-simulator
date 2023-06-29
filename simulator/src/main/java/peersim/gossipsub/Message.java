@@ -50,6 +50,10 @@ public class Message extends SimpleEvent {
 
   public static final int MSG_PUBLISH = 7;
 
+  public static final int MSG_MESSAGE = 8;
+
+  public static final int MSG_INIT_NEW_BLOCK = 10;
+
   // ______________________________________________________________________________________________
   /** This Object contains the body of the message, no matter what it contains */
   public Object body = null;
@@ -180,8 +184,16 @@ public class Message extends SimpleEvent {
     return new Message(MSG_PRUNE);
   }
 
-  public static final Message makePublishMessage(BigInteger id, Object value) {
-    return new Message(MSG_PUBLISH, id, value);
+  public static final Message makePublishMessage(String topic, Object value) {
+    return new Message(MSG_PUBLISH, topic, value);
+  }
+
+  public static final Message makeMessage(String topic, Object value) {
+    return new Message(MSG_MESSAGE, topic, value);
+  }
+
+  public static final Message makeInitNewBlock(Object body) {
+    return new Message(MSG_INIT_NEW_BLOCK, body);
   }
   // ______________________________________________________________________________________________
   public String typeToString() {
