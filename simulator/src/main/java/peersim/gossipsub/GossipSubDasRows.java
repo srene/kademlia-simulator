@@ -74,10 +74,10 @@ public class GossipSubDasRows extends GossipSubProtocol {
 
     Sample s = (Sample) m.value;
     mCache.put(s.getId(), s);
-    if (cache.get(topic) == null) cache.put(topic, new ArrayList<BigInteger>());
-    if (m.src == this.node || cache.get(topic).contains(s.getId())) return;
+    if (seen.get(topic) == null) seen.put(topic, new ArrayList<BigInteger>());
+    if (m.src == this.node || seen.get(topic).contains(s.getId())) return;
 
-    cache.get(topic).add(s.getId());
+    seen.get(topic).add(s.getId());
     if (mesh.get(topic) != null) {
       for (BigInteger id : mesh.get(topic)) {
         m.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(myPid)).getGossipNode();
