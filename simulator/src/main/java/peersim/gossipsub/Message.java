@@ -180,8 +180,8 @@ public class Message extends SimpleEvent {
     return new Message(MSG_IWANT, topic, ids);
   }
 
-  public static final Message makePruneMessage() {
-    return new Message(MSG_PRUNE);
+  public static final Message makePruneMessage(String topic) {
+    return new Message(MSG_PRUNE, topic);
   }
 
   public static final Message makePublishMessage(String topic, Object value) {

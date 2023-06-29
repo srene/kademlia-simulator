@@ -107,7 +107,7 @@ public class TrafficGeneratorSample implements Control {
         for (int j = 0; j < GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
           Sample s = b.getSample(i, j);
           String topic = "Row" + (s.getRow());
-          System.out.println("Topic " + topic);
+          // System.out.println("Topic " + topic);
           EDSimulator.add(0, Message.makePublishMessage(topic, s), n, protocol);
           topic = "Column" + (s.getColumn());
           EDSimulator.add(0, Message.makePublishMessage(topic, s), n, protocol);

@@ -20,6 +20,11 @@ public class GossipSubDasRows extends GossipSubProtocol {
 
   protected long time;
 
+  public GossipSubDasRows(String prefix) {
+    super(prefix);
+    samplingOp = new LinkedHashMap<>();
+    // TODO Auto-generated constructor stub
+  }
   /**
    * Replicate this object by returning an identical copy. It is called by the initializer and do
    * not fill any particular field.
@@ -31,17 +36,12 @@ public class GossipSubDasRows extends GossipSubProtocol {
     return dolly;
   }
 
-  GossipSubDasRows(String prefix) {
-    super(prefix);
-    samplingOp = new LinkedHashMap<Long, SamplingOperation>();
-  }
-
   private void startSampling(int row, int column) {
     logger.warning("StartSampling " + row + " " + column);
 
     ValidatorSamplingOperation op =
         new ValidatorSamplingOperation(
-            this.getGossipNode().getId(), time, currentBlock, null, row, 0, true, null);
+            this.getGossipNode().getId(), time, currentBlock, null, row, column, true, null);
     samplingOp.put(op.getId(), op);
   }
 
@@ -55,16 +55,16 @@ public class GossipSubDasRows extends GossipSubProtocol {
     time = CommonState.getTime();
     currentBlock = (Block) m.body;
 
-    int row = CommonState.r.nextInt(currentBlock.getSize());
+    int row = CommonState.r.nextInt(currentBlock.getSize()) + 1;
     startSampling(row, 0);
     EDSimulator.add(0, Message.makeInitJoinMessage("Row" + row), getNode(), myPid);
-    row = CommonState.r.nextInt(currentBlock.getSize());
+    row = CommonState.r.nextInt(currentBlock.getSize()) + 1;
     startSampling(row, 0);
     EDSimulator.add(0, Message.makeInitJoinMessage("Row" + row), getNode(), myPid);
-    int column = CommonState.r.nextInt(currentBlock.getSize());
+    int column = CommonState.r.nextInt(currentBlock.getSize()) + 1;
     EDSimulator.add(0, Message.makeInitJoinMessage("Column" + column), getNode(), myPid);
     startSampling(0, column);
-    column = CommonState.r.nextInt(currentBlock.getSize());
+    column = CommonState.r.nextInt(currentBlock.getSize()) + 1;
     EDSimulator.add(0, Message.makeInitJoinMessage("Column" + column), getNode(), myPid);
     startSampling(0, column);
   }
