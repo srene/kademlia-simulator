@@ -62,7 +62,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
   protected MCache mCache;
 
-  protected HashMap<String, List<BigInteger>> cache;
+  protected HashMap<String, List<BigInteger>> seen;
 
   private long heartbeat;
 
@@ -92,7 +92,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     tid = Configuration.getPid(prefix + "." + PAR_TRANSPORT);
     heartbeat = Configuration.getLong(prefix + "." + PAR_HEARTBEAT);
 
-    cache = new HashMap<>();
+    seen = new HashMap<>();
     peers = new PeerTable();
 
     mesh = new HashMap<>();
@@ -368,7 +368,6 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
           BigInteger node = nodes.get(CommonState.r.nextInt(nodes.size()));
           nodes.remove(node);
           logger.info("Pruning node " + node);
-
           sendPruneMessage(node, topic);
         }
       }
@@ -392,8 +391,8 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     for (String topic : allTopics) {
 
-      logger.warning("Sending gossip topic " + topic);
-      List<BigInteger> msgs = cache.get(topic);
+      logger.info("Sending gossip topic " + topic);
+      List<BigInteger> msgs = seen.get(topic);
       if (msgs != null) {
 
         List<BigInteger> ids = peers.getPeers(topic);
@@ -403,7 +402,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         int sent = 0;
         boolean found = false;
 
-        logger.warning(
+        logger.info(
             "Sending gossip msgs " + msgs.size() + " " + ids.size() + " " + mesh.get(topic).size());
 
         for (BigInteger id : ids) {
@@ -417,7 +416,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
               found = true;
             }
           }
-          logger.warning("Sending gossip to " + id + " " + !found);
+          // logger.warning("Sending gossip to " + id + " " + !found);
 
           if (!found) {
             logger.warning("Sending gossip to " + id);
@@ -506,16 +505,18 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     List<BigInteger> msgIds = (List<BigInteger>) m.value;
     List<BigInteger> iwants = new ArrayList<>();
-    List<BigInteger> have = cache.get(topic);
+    List<BigInteger> have = seen.get(topic);
 
-    logger.warning("handleIHave received " + topic+" "+msgIds.size());
+    logger.warning("handleIHave received " + topic + " " + msgIds.size());
 
     if (have != null) {
       for (BigInteger msg : msgIds) {
         if (!have.contains(msg)) iwants.add(msg);
       }
+    } else {
+      iwants.addAll(msgIds);
     }
-    if (iwants.size() > 0) sendIWantMessage(topic, m.src.getId(), msgIds);
+    if (iwants.size() > 0) sendIWantMessage(topic, m.src.getId(), iwants);
   }
 
   private void handleIWant(Message m, int myPid) {
@@ -537,10 +538,10 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     logger.warning("Publish message " + topic);
     Message msg = Message.makeMessage(topic, m.value);
     msg.src = this.node;
-    if (cache.get(topic) == null) cache.put(topic, new ArrayList<BigInteger>());
+    if (seen.get(topic) == null) seen.put(topic, new ArrayList<BigInteger>());
 
     BigInteger cid = getValueId(m.value);
-    cache.get(topic).add(cid);
+    seen.get(topic).add(cid);
     mCache.put(cid, m.value);
 
     if (mesh.get(topic) != null) {
@@ -556,10 +557,10 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     BigInteger cid = getValueId(m.value);
     mCache.put(cid, m.value);
-    if (cache.get(topic) == null) cache.put(topic, new ArrayList<BigInteger>());
-    if (m.src == this.node || cache.get(topic).contains(cid)) return;
+    if (seen.get(topic) == null) seen.put(topic, new ArrayList<BigInteger>());
+    if (m.src == this.node || seen.get(topic).contains(cid)) return;
 
-    cache.get(topic).add(cid);
+    seen.get(topic).add(cid);
     if (mesh.get(topic) != null) {
       for (BigInteger id : mesh.get(topic)) {
         m.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(myPid)).getGossipNode();
