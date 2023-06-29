@@ -392,31 +392,40 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     for (String topic : allTopics) {
 
+      logger.warning("Sending gossip topic " + topic);
       List<BigInteger> msgs = cache.get(topic);
       if (msgs != null) {
+
         List<BigInteger> ids = peers.getPeers(topic);
 
-        Collections.shuffle(ids);
-
+        if (ids != null) Collections.shuffle(ids);
+        else break;
         int sent = 0;
         boolean found = false;
+
+        logger.warning(
+            "Sending gossip msgs " + msgs.size() + " " + ids.size() + " " + mesh.get(topic).size());
+
         for (BigInteger id : ids) {
           if (mesh.get(topic) != null) {
-            if (!mesh.get(topic).contains(id)) {
+            if (mesh.get(topic).contains(id)) {
               found = true;
             }
           }
           if (fanout.get(topic) != null) {
-            if (!fanout.get(topic).contains(id)) {
+            if (fanout.get(topic).contains(id)) {
               found = true;
             }
           }
+          logger.warning("Sending gossip to " + id + " " + !found);
 
           if (!found) {
+            logger.warning("Sending gossip to " + id);
             sendIHaveMessage(topic, id, msgs);
             sent++;
           }
-          if (sent++ == GossipCommonConfig.D) break;
+          if (sent == GossipCommonConfig.D) break;
+          found = false;
         }
       }
     }
@@ -474,9 +483,9 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
   private void handleGraft(Message m, int myPid) {
     String topic = (String) m.body;
     logger.warning("handleGraft received " + topic + " from:" + m.src.getId());
-    if(mesh.get(topic)==null)mesh.put(topic,new ArrayList<BigInteger>());
+    if (mesh.get(topic) == null) mesh.put(topic, new ArrayList<BigInteger>());
     mesh.get(topic).add(m.src.getId());
-    
+    peers.addPeer(topic, m.src.getId());
   }
 
   private void handlePrune(Message m, int myPid) {
@@ -494,11 +503,13 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
   private void handleIHave(Message m, int myPid) {
     String topic = (String) m.body;
-    logger.info("handleIHave received " + topic);
 
     List<BigInteger> msgIds = (List<BigInteger>) m.value;
     List<BigInteger> iwants = new ArrayList<>();
     List<BigInteger> have = cache.get(topic);
+
+    logger.warning("handleIHave received " + topic+" "+msgIds.size());
+
     if (have != null) {
       for (BigInteger msg : msgIds) {
         if (!have.contains(msg)) iwants.add(msg);
