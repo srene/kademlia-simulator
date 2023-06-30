@@ -36,8 +36,6 @@ public class TrafficGeneratorRowColumn implements Control {
 
   int mapfn;
 
-  Block b;
-
   private int protocol;
 
   private boolean first = true, second = false;
@@ -69,7 +67,9 @@ public class TrafficGeneratorRowColumn implements Control {
   public boolean execute() {
     if (first) {
       first = false;
-      second = false;
+      second = true;
+      Block b = new Block(GossipCommonConfig.BLOCK_DIM_SIZE, ID_GENERATOR);
+
       for (int i = 0; i < Network.size(); i++) {
         Node n = Network.get(i);
         GossipSubProtocol prot = (GossipSubProtocol) n.getProtocol(protocol);
@@ -79,43 +79,25 @@ public class TrafficGeneratorRowColumn implements Control {
           for (int l = 1; l < Network.size(); l++) {
             Node n2 = Network.get(l);
             GossipSubProtocol prot2 = (GossipSubProtocol) n2.getProtocol(protocol);
-            prot2.getTable().addPeer("Discovery", id);
+            for (int j = 1; j <= GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
+              String topic = "Row" + j;
+              prot2.getTable().addPeer(topic, id);
+              topic = "Column" + j;
+              prot2.getTable().addPeer(topic, id);
+            }
+            EDSimulator.add(0, generateNewBlockMessage(b), n2, protocol);
           }
-          EDSimulator.add(0, Message.makeInitJoinMessage("Discovery"), n, protocol);
 
           for (int j = 1; j <= GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
             String topic = "Row" + j;
             EDSimulator.add(0, Message.makeInitJoinMessage(topic), n, protocol);
-            EDSimulator.add(0, Message.makePublishMessage("Discovery", topic), n, protocol);
             topic = "Column" + j;
             EDSimulator.add(0, Message.makeInitJoinMessage(topic), n, protocol);
-            EDSimulator.add(0, Message.makePublishMessage("Discovery", topic), n, protocol);
           }
-        } else {
-          EDSimulator.add(0, Message.makeInitJoinMessage("Discovery"), n, protocol);
         }
-
-        /*else {
-          int r1 = CommonState.r.nextInt(GossipCommonConfig.BLOCK_DIM_SIZE) + 1;
-          EDSimulator.add(0, Message.makeInitJoinMessage("Row" + r1), n, protocol);
-          int r2 = CommonState.r.nextInt(GossipCommonConfig.BLOCK_DIM_SIZE) + 1;
-          EDSimulator.add(0, Message.makeInitJoinMessage("Row" + r2), n, protocol);
-          int c1 = CommonState.r.nextInt(GossipCommonConfig.BLOCK_DIM_SIZE) + 1;
-          EDSimulator.add(0, Message.makeInitJoinMessage("Column" + c1), n, protocol);
-          int c2 = CommonState.r.nextInt(GossipCommonConfig.BLOCK_DIM_SIZE) + 1;
-          EDSimulator.add(0, Message.makeInitJoinMessage("Column" + c2), n, protocol);
-          for (int l = 0; l < Network.size(); l++) {
-            Node n2 = Network.get(l);
-            GossipSubProtocol prot2 = (GossipSubProtocol) n2.getProtocol(protocol);
-            prot2.getTable().addPeer("Row" + r1, id);
-            prot2.getTable().addPeer("Row" + r2, id);
-            prot2.getTable().addPeer("Column" + c1, id);
-            prot2.getTable().addPeer("Column" + c2, id);
-          }
-        }*/
       }
 
-    } else if (second) {
+    } else /*if (second)*/ {
       Block b = new Block(GossipCommonConfig.BLOCK_DIM_SIZE, ID_GENERATOR);
 
       Node n = Network.get(0);
@@ -124,7 +106,6 @@ public class TrafficGeneratorRowColumn implements Control {
         for (int j = 0; j < GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
           Sample s = b.getSample(i, j);
           String topic = "Row" + (s.getRow());
-          // System.out.println("Topic " + topic);
           EDSimulator.add(0, Message.makePublishMessage(topic, s), n, protocol);
           topic = "Column" + (s.getColumn());
           EDSimulator.add(0, Message.makePublishMessage(topic, s), n, protocol);

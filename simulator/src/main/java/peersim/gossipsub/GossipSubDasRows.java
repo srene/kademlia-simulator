@@ -1,9 +1,8 @@
 package peersim.gossipsub;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import peersim.core.CommonState;
+import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDSimulator;
 import peersim.kademlia.SimpleEvent;
@@ -18,12 +17,18 @@ public class GossipSubDasRows extends GossipSubProtocol {
 
   protected Block currentBlock;
 
-  protected long time;
+  // protected long time;
+  private boolean started;
+  private int row1;
+  private int row2;
+  private int col1;
+  private int col2;
 
   public GossipSubDasRows(String prefix) {
     super(prefix);
     samplingOp = new LinkedHashMap<>();
     // TODO Auto-generated constructor stub
+    started = false;
   }
   /**
    * Replicate this object by returning an identical copy. It is called by the initializer and do
@@ -41,7 +46,14 @@ public class GossipSubDasRows extends GossipSubProtocol {
 
     ValidatorSamplingOperation op =
         new ValidatorSamplingOperation(
-            this.getGossipNode().getId(), time, currentBlock, null, row, column, true, null);
+            this.getGossipNode().getId(),
+            CommonState.getTime(),
+            currentBlock,
+            null,
+            row,
+            column,
+            true,
+            null);
     samplingOp.put(op.getId(), op);
   }
 
@@ -52,25 +64,43 @@ public class GossipSubDasRows extends GossipSubProtocol {
    * @param myPid the sender Pid
    */
   protected void handleInitNewBlock(Message m, int myPid) {
-    time = CommonState.getTime();
+
     currentBlock = (Block) m.body;
 
-    int row = CommonState.r.nextInt(currentBlock.getSize()) + 1;
-    startSampling(row, 0);
-    EDSimulator.add(0, Message.makeInitJoinMessage("Row" + row), getNode(), myPid);
-    row = CommonState.r.nextInt(currentBlock.getSize()) + 1;
-    startSampling(row, 0);
-    EDSimulator.add(0, Message.makeInitJoinMessage("Row" + row), getNode(), myPid);
-    int column = CommonState.r.nextInt(currentBlock.getSize()) + 1;
-    EDSimulator.add(0, Message.makeInitJoinMessage("Column" + column), getNode(), myPid);
-    startSampling(0, column);
-    column = CommonState.r.nextInt(currentBlock.getSize()) + 1;
-    EDSimulator.add(0, Message.makeInitJoinMessage("Column" + column), getNode(), myPid);
-    startSampling(0, column);
+    if (!started) {
+      started = true;
+      row1 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
+      EDSimulator.add(0, Message.makeInitJoinMessage("Row" + row1), getNode(), myPid);
+      row2 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
+      EDSimulator.add(0, Message.makeInitJoinMessage("Row" + row2), getNode(), myPid);
+      col1 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
+      EDSimulator.add(0, Message.makeInitJoinMessage("Column" + col1), getNode(), myPid);
+      col2 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
+      EDSimulator.add(0, Message.makeInitJoinMessage("Column" + col2), getNode(), myPid);
+
+      for (int i = 1; i < Network.size(); i++) {
+        Node n = Network.get(i);
+        GossipSubProtocol prot = (GossipSubProtocol) n.getProtocol(myPid);
+        prot.getTable().addPeer("Row" + row1, this.getGossipNode().getId());
+        prot.getTable().addPeer("Row" + row2, this.getGossipNode().getId());
+        prot.getTable().addPeer("Column" + col1, this.getGossipNode().getId());
+        prot.getTable().addPeer("Column" + col2, this.getGossipNode().getId());
+      }
+    } else {
+      startSampling(row1, 0);
+      startSampling(row2, 0);
+      startSampling(0, col1);
+      startSampling(0, col2);
+    }
   }
 
-  private void handleMessage(Message m, int myPid) {
-    String topic = (String) m.body;
+  protected void handleMessage(Message m, int myPid) {
+
+    Sample s = (Sample) m.value;
+
+    // logger.warning("Received sample " + m.body + " " + s.getRow() + " " + s.getColumn());
+    super.handleMessage(m, myPid);
+    /*String topic = (String) m.body;
 
     Sample s = (Sample) m.value;
     mCache.put(s.getId(), s);
@@ -83,7 +113,7 @@ public class GossipSubDasRows extends GossipSubProtocol {
         m.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(myPid)).getGossipNode();
         sendMessage(m, id, myPid);
       }
-    }
+    }*/
     Sample[] samples = new Sample[] {s};
 
     logger.warning("Received message sample " + s.getRow() + " " + s.getColumn());
