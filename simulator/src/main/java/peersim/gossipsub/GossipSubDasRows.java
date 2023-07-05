@@ -69,6 +69,10 @@ public class GossipSubDasRows extends GossipSubProtocol {
 
     currentBlock = (Block) m.body;
 
+    for (SamplingOperation sop : samplingOp.values()) {
+      GossipObserver.reportOperation(sop);
+    }
+    samplingOp.clear();
     if (!started) {
       started = true;
       row1 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
@@ -121,12 +125,25 @@ public class GossipSubDasRows extends GossipSubProtocol {
     logger.warning("Received message sample " + s.getRow() + " " + s.getColumn());
 
     List<Long> toRemove = new ArrayList<>();
+
+    String topic = (String) m.body;
     for (SamplingOperation sop : samplingOp.values()) {
+      ValidatorSamplingOperation vsop = (ValidatorSamplingOperation) sop;
+      if (getRow(topic) != 0) {
+        if (vsop.getRow() != getRow(topic)) return;
+      }
+      if (getColumn(topic) != 0) {
+        if (vsop.getColumn() != getColumn(topic)) return;
+      }
+      sop.addMessage(m.id);
       sop.elaborateResponse(samples);
+      sop.increaseHops();
+
       // sop.increaseHops();
       if (sop.completed()) {
-        GossipObserver.reportOperation(sop);
-        toRemove.add(sop.getId());
+        // GossipObserver.reportOperation(sop);
+        // toRemove.add(sop.getId());
+        sop.setStopTime(CommonState.getTime());
       }
       logger.warning(
           "Sop "
@@ -138,9 +155,9 @@ public class GossipSubDasRows extends GossipSubProtocol {
               + " "
               + sop.getHops());
     }
-    for (Long id : toRemove) {
+    /*for (Long id : toRemove) {
       samplingOp.remove(id);
-    }
+    }*/
   }
 
   @Override
@@ -168,5 +185,21 @@ public class GossipSubDasRows extends GossipSubProtocol {
     }
 
     super.processEvent(node, pid, event);
+  }
+
+  private int getRow(String topic) {
+    if (topic.substring(0, 4).equals("Row")) {
+      return Integer.valueOf(topic.substring(4, topic.length()));
+    } else {
+      return 0;
+    }
+  }
+
+  private int getColumn(String topic) {
+    if (topic.substring(0, 6).equals("Column")) {
+      return Integer.valueOf(topic.substring(6, topic.length()));
+    } else {
+      return 0;
+    }
   }
 }

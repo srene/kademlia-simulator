@@ -40,7 +40,7 @@ public abstract class Operation {
   protected ArrayList<BigInteger> returned;
 
   /** Timestamp stop Operation */
-  protected long stopTime;
+  protected Long stopTime;
 
   /** Messages in the operation */
   protected List<Long> messages;
@@ -119,6 +119,10 @@ public abstract class Operation {
 
   public void setStopTime(long time) {
     this.stopTime = time;
+  }
+
+  public Long getStopTime() {
+    return stopTime;
   }
 
   public abstract Map<String, Object> toMap();
