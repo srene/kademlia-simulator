@@ -188,18 +188,20 @@ public class GossipSubDasRows extends GossipSubProtocol {
   }
 
   private int getRow(String topic) {
-    if (topic.substring(0, 4).equals("Row")) {
-      return Integer.valueOf(topic.substring(4, topic.length()));
-    } else {
-      return 0;
+    if (topic.length() > 4) {
+      if (topic.substring(0, 4).equals("Row")) {
+        return Integer.valueOf(topic.substring(4, topic.length()));
+      }
     }
+    return 0;
   }
 
   private int getColumn(String topic) {
-    if (topic.substring(0, 6).equals("Column")) {
-      return Integer.valueOf(topic.substring(6, topic.length()));
-    } else {
-      return 0;
+    if (topic.length() > 6) {
+      if (topic.substring(0, 7).equals("Column")) {
+        return Integer.valueOf(topic.substring(7, topic.length()));
+      }
     }
+    return 0;
   }
 }
