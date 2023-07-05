@@ -1,6 +1,8 @@
 package peersim.gossipsub;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import peersim.core.CommonState;
 import peersim.core.Network;
 import peersim.core.Node;
@@ -118,9 +120,14 @@ public class GossipSubDasRows extends GossipSubProtocol {
 
     logger.warning("Received message sample " + s.getRow() + " " + s.getColumn());
 
+    List<Long> toRemove = new ArrayList<>();
     for (SamplingOperation sop : samplingOp.values()) {
       sop.elaborateResponse(samples);
-      sop.increaseHops();
+      // sop.increaseHops();
+      if (sop.completed()) {
+        GossipObserver.reportOperation(sop);
+        toRemove.add(sop.getId());
+      }
       logger.warning(
           "Sop "
               + sop.getSamples().length
@@ -130,6 +137,9 @@ public class GossipSubDasRows extends GossipSubProtocol {
               + ((ValidatorSamplingOperation) sop).getColumn()
               + " "
               + sop.getHops());
+    }
+    for (Long id : toRemove) {
+      samplingOp.remove(id);
     }
   }
 

@@ -1,4 +1,4 @@
-package peersim.kademlia;
+package peersim.gossipsub;
 
 import java.io.File;
 import java.io.FileWriter;
