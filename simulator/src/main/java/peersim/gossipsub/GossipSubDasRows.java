@@ -122,11 +122,20 @@ public class GossipSubDasRows extends GossipSubProtocol {
     }*/
     Sample[] samples = new Sample[] {s};
 
-    logger.warning("Received message sample " + s.getRow() + " " + s.getColumn());
-
     List<Long> toRemove = new ArrayList<>();
 
     String topic = (String) m.body;
+
+    logger.warning(
+        "Received message sample "
+            + s.getRow()
+            + " "
+            + s.getColumn()
+            + " "
+            + getRow(topic)
+            + " "
+            + getColumn(topic));
+
     for (SamplingOperation sop : samplingOp.values()) {
       ValidatorSamplingOperation vsop = (ValidatorSamplingOperation) sop;
       if (getRow(topic) != 0) {
