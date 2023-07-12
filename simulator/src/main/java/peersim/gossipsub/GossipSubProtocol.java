@@ -464,10 +464,8 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         p.remove(this.node.getId());
         for (BigInteger id : p) {
           if (mesh.get(topic).size() >= GossipCommonConfig.D) break;
-          if (id.compareTo(this.getGossipNode().getId()) != 0) {
-            logger.warning("Adding " + id + " to mesh");
-            mesh.get(topic).add(id);
-          }
+          logger.warning("Adding " + id + " to mesh");
+          mesh.get(topic).add(id);
         }
       }
     }
@@ -580,6 +578,8 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     if (seen.get(topic) == null) seen.put(topic, new ArrayList<BigInteger>());
     if (m.src == this.node || seen.get(topic).contains(cid)) return;
+
+    logger.warning("handleMessage resending " + cid + " " + m.id);
 
     seen.get(topic).add(cid);
     if (mesh.get(topic) != null) {
