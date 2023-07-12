@@ -126,20 +126,12 @@ public class GossipSubDasRows extends GossipSubProtocol {
 
     String topic = (String) m.body;
 
-    logger.warning(
-        "Received message sample "
-            + s.getRow()
-            + " "
-            + s.getColumn()
-            + " "
-            + getRow(topic)
-            + " "
-            + getColumn(topic)+" "+topic);
+    logger.warning("Received message sample " + s.getRow() + " " + s.getColumn() + " " + topic);
 
     for (SamplingOperation sop : samplingOp.values()) {
       ValidatorSamplingOperation vsop = (ValidatorSamplingOperation) sop;
 
-      if(s.getRow()==vsop.getRow()||s.getColumn()==vsop.getColumn()){
+      if (s.getRow() == vsop.getRow() || s.getColumn() == vsop.getColumn()) {
         sop.addMessage(m.id);
         sop.elaborateResponse(samples);
         sop.increaseHops();
