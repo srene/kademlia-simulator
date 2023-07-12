@@ -138,31 +138,28 @@ public class GossipSubDasRows extends GossipSubProtocol {
 
     for (SamplingOperation sop : samplingOp.values()) {
       ValidatorSamplingOperation vsop = (ValidatorSamplingOperation) sop;
-      if (getRow(topic) != 0) {
-        if (vsop.getRow() != getRow(topic)) return;
-      }
-      if (getColumn(topic) != 0) {
-        if (vsop.getColumn() != getColumn(topic)) return;
-      }
-      sop.addMessage(m.id);
-      sop.elaborateResponse(samples);
-      sop.increaseHops();
 
-      // sop.increaseHops();
-      if (sop.completed()) {
-        // GossipObserver.reportOperation(sop);
-        // toRemove.add(sop.getId());
-        sop.setStopTime(CommonState.getTime());
+      if(s.getRow()==vsop.getRow()||s.getColumn()==vsop.getColumn()){
+        sop.addMessage(m.id);
+        sop.elaborateResponse(samples);
+        sop.increaseHops();
+
+        // sop.increaseHops();
+        if (sop.completed()) {
+          // GossipObserver.reportOperation(sop);
+          // toRemove.add(sop.getId());
+          sop.setStopTime(CommonState.getTime());
+        }
+        logger.warning(
+            "Sop "
+                + sop.getSamples().length
+                + " "
+                + ((ValidatorSamplingOperation) sop).getRow()
+                + " "
+                + ((ValidatorSamplingOperation) sop).getColumn()
+                + " "
+                + sop.getHops());
       }
-      logger.warning(
-          "Sop "
-              + sop.getSamples().length
-              + " "
-              + ((ValidatorSamplingOperation) sop).getRow()
-              + " "
-              + ((ValidatorSamplingOperation) sop).getColumn()
-              + " "
-              + sop.getHops());
     }
     /*for (Long id : toRemove) {
       samplingOp.remove(id);
@@ -196,7 +193,7 @@ public class GossipSubDasRows extends GossipSubProtocol {
     super.processEvent(node, pid, event);
   }
 
-  private int getRow(String topic) {
+  /*private int getRow(String topic) {
     if (topic.length() > 4) {
       if (topic.substring(0, 4).equals("Row")) {
         return Integer.valueOf(topic.substring(4, topic.length()));
@@ -212,5 +209,5 @@ public class GossipSubDasRows extends GossipSubProtocol {
       }
     }
     return 0;
-  }
+  }*/
 }
