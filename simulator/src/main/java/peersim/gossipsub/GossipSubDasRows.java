@@ -134,7 +134,7 @@ public class GossipSubDasRows extends GossipSubProtocol {
             + " "
             + getRow(topic)
             + " "
-            + getColumn(topic));
+            + getColumn(topic)+" "+topic);
 
     for (SamplingOperation sop : samplingOp.values()) {
       ValidatorSamplingOperation vsop = (ValidatorSamplingOperation) sop;
