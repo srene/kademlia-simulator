@@ -461,6 +461,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
       if (p != null) {
         Collections.shuffle(p);
+        p.remove(this.node.getId());
         for (BigInteger id : p) {
           if (mesh.get(topic).size() >= GossipCommonConfig.D) break;
           if (id.compareTo(this.getGossipNode().getId()) != 0) {
@@ -567,7 +568,6 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
   protected void handleMessage(Message m, int myPid) {
     String topic = (String) m.body;
-    logger.warning("handleMessage received");
     if (topic.equals("Discovery")) {
       String[] disc = ((String) m.value).split(":");
       logger.warning("Discovery message rcvd " + disc[0] + " " + disc[1] + m.src.getId());
@@ -576,6 +576,8 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     // BigInteger cid = getValueId(m.value);
     BigInteger cid = ((Sample) m.value).getId();
     mCache.put(cid, m.value);
+    logger.warning("handleMessage received " + cid + " " + m.id);
+
     if (seen.get(topic) == null) seen.put(topic, new ArrayList<BigInteger>());
     if (m.src == this.node || seen.get(topic).contains(cid)) return;
 
