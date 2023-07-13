@@ -7,7 +7,6 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,9 +54,9 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
   private PeerTable peers;
 
-  protected HashMap<String, List<BigInteger>> mesh;
+  protected HashMap<String, HashSet<BigInteger>> mesh;
 
-  private HashMap<String, List<BigInteger>> fanout;
+  private HashMap<String, HashSet<BigInteger>> fanout;
 
   private HashMap<String, Long> fanoutExpirations;
 
@@ -221,6 +220,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     // destpid = dest.getKademliaProtocol().getProtocolID();
 
+    logger.warning("Sending message to " + destId);
     // Get the transport protocol
     transport = (UnreliableTransport) (Network.prototype).getProtocol(tid);
 
@@ -354,7 +354,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     for (String topic : mesh.keySet()) {
       logger.warning("heartbeat execute " + mesh.get(topic).size() + " " + topic);
       if (mesh.get(topic).size() < GossipCommonConfig.D_low) {
-        List<BigInteger> nodes =
+        HashSet<BigInteger> nodes =
             peers.getNPeers(topic, GossipCommonConfig.D - mesh.get(topic).size(), mesh.get(topic));
         nodes.remove(this.node.getId());
         mesh.get(topic).addAll(nodes);
@@ -363,10 +363,10 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         }
       }
       if (mesh.get(topic).size() > GossipCommonConfig.D_high) {
-        List<BigInteger> nodes = mesh.get(topic);
+        HashSet<BigInteger> nodes = mesh.get(topic);
         int toRemove = mesh.get(topic).size() - GossipCommonConfig.D_high;
         for (int i = 0; i < toRemove; i++) {
-          BigInteger node = nodes.get(CommonState.r.nextInt(nodes.size()));
+          BigInteger node = nodes.iterator().next();
           nodes.remove(node);
           logger.info("Pruning node " + node);
           sendPruneMessage(node, topic);
@@ -379,7 +379,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         fanoutExpirations.remove(topic);
       } else {
         if (fanout.get(topic).size() < GossipCommonConfig.D) {
-          List<BigInteger> nodes =
+          HashSet<BigInteger> nodes =
               peers.getNPeers(
                   topic, GossipCommonConfig.D - mesh.get(topic).size(), mesh.get(topic));
           fanout.get(topic).addAll(nodes);
@@ -396,10 +396,11 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
       List<BigInteger> msgs = seen.get(topic);
       if (msgs != null) {
 
-        List<BigInteger> ids = peers.getPeers(topic);
+        HashSet<BigInteger> ids = peers.getPeers(topic);
 
-        if (ids != null) Collections.shuffle(ids);
-        else break;
+        // if (ids != null) Collections.shuffle(ids);
+        // else break;
+        if (ids == null) break;
         int sent = 0;
         boolean found = false;
 
@@ -444,11 +445,11 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     if (mesh.get(topic) != null) return;
     if (fanout.get(topic) != null) {
-      List<BigInteger> p = fanout.get(topic);
+      HashSet<BigInteger> p = fanout.get(topic);
       mesh.put(topic, p);
       fanout.remove(topic);
       if (p.size() < GossipCommonConfig.D) {
-        List<BigInteger> p2 =
+        HashSet<BigInteger> p2 =
             peers.getNPeers(topic, GossipCommonConfig.D - p.size(), mesh.get(topic));
         p2.remove(this.node.getId());
         for (BigInteger id : p2) {
@@ -456,11 +457,11 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         }
       }
     } else if (mesh.get(topic) == null) {
-      List<BigInteger> p = peers.getPeers(topic);
-      mesh.put(topic, new ArrayList<BigInteger>());
+      HashSet<BigInteger> p = peers.getPeers(topic);
+      mesh.put(topic, new HashSet<BigInteger>());
 
       if (p != null) {
-        Collections.shuffle(p);
+        // Collections.shuffle(p);
         p.remove(this.node.getId());
         for (BigInteger id : p) {
           if (mesh.get(topic).size() >= GossipCommonConfig.D) break;
@@ -470,7 +471,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
       }
     }
     if (mesh.get(topic) != null) {
-      List<BigInteger> p = mesh.get(topic);
+      HashSet<BigInteger> p = mesh.get(topic);
       for (BigInteger id : p) {
         sendGraftMessage(id, topic);
       }
@@ -481,7 +482,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     String topic = (String) m.body;
     logger.warning("Handleleave received " + topic);
     if (mesh.get(topic) != null) {
-      List<BigInteger> p = mesh.get(topic);
+      HashSet<BigInteger> p = mesh.get(topic);
       for (BigInteger id : p) {
         sendPruneMessage(id, topic);
       }
@@ -536,6 +537,10 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         Message msg = Message.makeMessage((String) m.body, mCache.get(id));
         msg.src = this.node;
         msg.dst = m.src;
+        BigInteger cid = ((Sample) msg.value).getId();
+
+        logger.warning("sending message iwant " + cid + " " + msg.id + " to " + msg.dst.getId());
+
         sendMessage(msg, m.src.getId(), myPid);
       }
     }
@@ -544,8 +549,9 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
   private void handlePublish(Message m, int myPid) {
     String topic = (String) m.body;
-    if (mesh.get(topic) == null) logger.warning("Publish message " + topic + " " + mesh.get(topic));
-    else logger.warning("Publish message " + topic + " " + mesh.get(topic).size());
+
+    Sample s = (Sample) m.value;
+    logger.warning("Publish message " + topic + " " + mesh.get(topic).size() + " " + s.getId());
 
     Message msg = Message.makeMessage(topic, m.value);
     msg.src = this.node;
@@ -557,7 +563,9 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     mCache.put(cid, m.value);
 
     if (mesh.get(topic) != null) {
-      for (BigInteger id : mesh.get(topic)) {
+      HashSet<BigInteger> nodesToSend = mesh.get(topic);
+      nodesToSend.remove(msg.src.getId());
+      for (BigInteger id : nodesToSend) {
         msg.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(myPid)).getGossipNode();
         sendMessage(msg, id, myPid);
       }
@@ -571,20 +579,30 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
       logger.warning("Discovery message rcvd " + disc[0] + " " + disc[1] + m.src.getId());
       peers.addPeer(disc[0], new BigInteger(disc[1]));
     }
+
     // BigInteger cid = getValueId(m.value);
     BigInteger cid = ((Sample) m.value).getId();
     mCache.put(cid, m.value);
-    logger.warning("handleMessage received " + cid + " " + m.id);
+    logger.warning("handleMessage received " + cid + " " + m.id + " " + m.src.getId());
 
     if (seen.get(topic) == null) seen.put(topic, new ArrayList<BigInteger>());
     if (m.src == this.node || seen.get(topic).contains(cid)) return;
 
-    logger.warning("handleMessage resending " + cid + " " + m.id);
+    // logger.warning("handleMessage resending " + cid + " " + m.id);
 
     seen.get(topic).add(cid);
+
     if (mesh.get(topic) != null) {
-      for (BigInteger id : mesh.get(topic)) {
+
+      HashSet<BigInteger> nodesToSend = mesh.get(topic);
+      nodesToSend.remove(m.src.getId());
+      nodesToSend.remove(this.node.getId());
+      for (BigInteger id : nodesToSend) {
         m.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(myPid)).getGossipNode();
+        m.src = this.node;
+        logger.warning(
+            "handleMessage resending " + cid + " " + m.id + " to " + id + " " + m.dst.getId());
+
         sendMessage(m, id, myPid);
       }
     }

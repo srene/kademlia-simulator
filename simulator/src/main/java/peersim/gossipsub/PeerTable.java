@@ -1,13 +1,12 @@
 package peersim.gossipsub;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 
 public class PeerTable {
 
-  private HashMap<String, List<BigInteger>> peerMap; // , samplesIndexed;
+  private HashMap<String, HashSet<BigInteger>> peerMap; // , samplesIndexed;
 
   public PeerTable() {
 
@@ -16,23 +15,23 @@ public class PeerTable {
 
   public void addPeer(String topic, BigInteger peer) {
     if (peerMap.get(topic) != null) {
-      List<BigInteger> nodes = peerMap.get(topic);
+      HashSet<BigInteger> nodes = peerMap.get(topic);
       nodes.add(peer);
     } else {
-      List<BigInteger> nodes = new ArrayList<>();
+      HashSet<BigInteger> nodes = new HashSet<>();
       nodes.add(peer);
       peerMap.put(topic, nodes);
     }
   }
 
-  public List<BigInteger> getPeers(String topic) {
+  public HashSet<BigInteger> getPeers(String topic) {
     return peerMap.get(topic);
   }
 
-  public List<BigInteger> getNPeers(String topic, int n, List<BigInteger> peers) {
-    List<BigInteger> nodes = new ArrayList<>();
+  public HashSet<BigInteger> getNPeers(String topic, int n, HashSet<BigInteger> peers) {
+    HashSet<BigInteger> nodes = new HashSet<>();
     if (peerMap.get(topic) != null) {
-      List<BigInteger> topicPeers = peerMap.get(topic);
+      HashSet<BigInteger> topicPeers = peerMap.get(topic);
       for (BigInteger id : topicPeers) {
         if (!peers.contains(id)) nodes.add(id);
       }

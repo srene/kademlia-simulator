@@ -180,9 +180,9 @@ public class GossipSubDasRows extends GossipSubProtocol {
         m = (Message) event;
         handleMessage(m, pid);
         break;
+      default:
+        super.processEvent(node, pid, event);
     }
-
-    super.processEvent(node, pid, event);
   }
 
   /*private int getRow(String topic) {
