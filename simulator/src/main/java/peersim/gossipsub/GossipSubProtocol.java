@@ -220,8 +220,21 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     // destpid = dest.getKademliaProtocol().getProtocolID();
 
-    logger.warning("Sending message to " + destId);
+    logger.warning(
+        "Sending message "
+            + m.getType()
+            + " to "
+            + destId
+            + " "
+            + ((GossipSubProtocol) dest.getProtocol(myPid)).getGossipNode().getId()
+            + " from "
+            + this.getGossipNode().getId()
+            + " "
+            + ((GossipSubProtocol) src.getProtocol(myPid)).getGossipNode().getId()
+            + " "
+            + m.getType());
     // Get the transport protocol
+    m.nrHops++;
     transport = (UnreliableTransport) (Network.prototype).getProtocol(tid);
 
     // Send the message
@@ -309,6 +322,9 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     if (event instanceof Message) {
       m = (Message) event;
       // KademliaObserver.reportMsg(m, false);
+      if (m.src != null)
+        logger.warning("Message received " + m.getType() + " from " + m.src.getId());
+      else logger.warning("Message src null " + m.getType());
     }
 
     // Handle the event based on its type.
@@ -420,13 +436,13 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
           }
           // logger.warning("Sending gossip to " + id + " " + !found);
 
-          if (!found) {
+          /*if (!found) {
             logger.warning("Sending gossip to " + id);
             sendIHaveMessage(topic, id, msgs);
             sent++;
           }
           if (sent == GossipCommonConfig.D) break;
-          found = false;
+          found = false;*/
         }
       }
     }
@@ -517,7 +533,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     List<BigInteger> iwants = new ArrayList<>();
     List<BigInteger> have = seen.get(topic);
 
-    logger.warning("handleIHave received " + topic + " " + msgIds.size());
+    logger.info("handleIHave received " + topic + " " + msgIds.size());
 
     if (have != null) {
       for (BigInteger msg : msgIds) {
@@ -530,7 +546,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
   }
 
   private void handleIWant(Message m, int myPid) {
-    logger.warning("handleIWant received " + m.body);
+    logger.info("handleIWant received " + m.body);
     List<BigInteger> ids = (List<BigInteger>) m.value;
     for (BigInteger id : ids) {
       if (mCache.get(id) != null) {
@@ -539,7 +555,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         msg.dst = m.src;
         BigInteger cid = ((Sample) msg.value).getId();
 
-        logger.warning("sending message iwant " + cid + " " + msg.id + " to " + msg.dst.getId());
+        logger.info("sending message iwant " + cid + " " + msg.id + " to " + msg.dst.getId());
 
         sendMessage(msg, m.src.getId(), myPid);
       }
@@ -548,62 +564,79 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
   }
 
   private void handlePublish(Message m, int myPid) {
+
     String topic = (String) m.body;
-
     Sample s = (Sample) m.value;
-    logger.warning("Publish message " + topic + " " + mesh.get(topic).size() + " " + s.getId());
+    logger.warning(
+        "Publish message "
+            + topic
+            + " "
+            + mesh.get(topic).size()
+            + " "
+            + s.getId()
+            + " "
+            + gossipid);
 
-    Message msg = Message.makeMessage(topic, m.value);
-    msg.src = this.node;
     if (seen.get(topic) == null) seen.put(topic, new ArrayList<BigInteger>());
 
     // BigInteger cid = getValueId(m.value);
-    BigInteger cid = ((Sample) m.value).getId();
+    BigInteger cid = s.getId();
     seen.get(topic).add(cid);
-    mCache.put(cid, m.value);
+    mCache.put(cid, s);
 
     if (mesh.get(topic) != null) {
       HashSet<BigInteger> nodesToSend = mesh.get(topic);
-      nodesToSend.remove(msg.src.getId());
+      nodesToSend.remove(this.node.getId());
       for (BigInteger id : nodesToSend) {
-        msg.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(myPid)).getGossipNode();
-        sendMessage(msg, id, myPid);
+
+        Message msg = Message.makeMessage(topic, s);
+        msg.src = this.node;
+        msg.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(gossipid)).getGossipNode();
+        sendMessage(msg, id, gossipid);
       }
     }
   }
 
   protected void handleMessage(Message m, int myPid) {
     String topic = (String) m.body;
-    if (topic.equals("Discovery")) {
+    /*if (topic.equals("Discovery")) {
       String[] disc = ((String) m.value).split(":");
       logger.warning("Discovery message rcvd " + disc[0] + " " + disc[1] + m.src.getId());
       peers.addPeer(disc[0], new BigInteger(disc[1]));
-    }
+    }*/
 
     // BigInteger cid = getValueId(m.value);
-    BigInteger cid = ((Sample) m.value).getId();
-    mCache.put(cid, m.value);
-    logger.warning("handleMessage received " + cid + " " + m.id + " " + m.src.getId());
+    Sample s = (Sample) m.value;
+    BigInteger cid = s.getId();
+    mCache.put(cid, s);
+    logger.warning(
+        "handleMessage received "
+            + topic
+            + " "
+            + cid
+            + " "
+            + m.id
+            + " "
+            + m.src.getId()
+            + " "
+            + m.nrHops);
 
     if (seen.get(topic) == null) seen.put(topic, new ArrayList<BigInteger>());
-    if (m.src == this.node || seen.get(topic).contains(cid)) return;
-
-    // logger.warning("handleMessage resending " + cid + " " + m.id);
+    if (seen.get(topic).contains(cid)) return;
 
     seen.get(topic).add(cid);
 
     if (mesh.get(topic) != null) {
-
       HashSet<BigInteger> nodesToSend = mesh.get(topic);
       nodesToSend.remove(m.src.getId());
       nodesToSend.remove(this.node.getId());
       for (BigInteger id : nodesToSend) {
-        m.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(myPid)).getGossipNode();
-        m.src = this.node;
+        Message mbis = m.copy();
+        mbis.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(myPid)).getGossipNode();
+        mbis.src = this.node;
         logger.warning(
             "handleMessage resending " + cid + " " + m.id + " to " + id + " " + m.dst.getId());
-
-        sendMessage(m, id, myPid);
+        sendMessage(mbis, id, myPid);
       }
     }
   }

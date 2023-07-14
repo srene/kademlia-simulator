@@ -101,20 +101,23 @@ public class TrafficGeneratorRowColumn implements Control {
       Block b = new Block(GossipCommonConfig.BLOCK_DIM_SIZE, ID_GENERATOR);
 
       Node n = Network.get(0);
-
+      for (int i = 1; i < Network.size(); i++) {
+        Node n2 = Network.get(i);
+        EDSimulator.add(1, generateNewBlockMessage(b), n2, protocol);
+      }
       for (int i = 0; i < GossipCommonConfig.BLOCK_DIM_SIZE; i++) {
         for (int j = 0; j < GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
           Sample s = b.getSample(i, j);
           String topic = "Row" + (s.getRow());
-          EDSimulator.add(0, Message.makePublishMessage(topic, s), n, protocol);
+          EDSimulator.add(10, Message.makePublishMessage(topic, s), n, protocol);
           topic = "Column" + (s.getColumn());
-          EDSimulator.add(0, Message.makePublishMessage(topic, s), n, protocol);
+          EDSimulator.add(10, Message.makePublishMessage(topic, s), n, protocol);
         }
       }
-      for (int i = 1; i < Network.size(); i++) {
+      /*for (int i = 1; i < Network.size(); i++) {
         Node n2 = Network.get(i);
         EDSimulator.add(0, generateNewBlockMessage(b), n2, protocol);
-      }
+      }*/
       second = false;
       ID_GENERATOR++;
     }

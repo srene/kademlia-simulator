@@ -78,7 +78,7 @@ public class Message extends SimpleEvent {
   public GossipNode src;
 
   /** Available to count the number of hops the message did. */
-  protected int nrHops = 0;
+  public int nrHops = 0;
 
   // ______________________________________________________________________________________________
   /**
@@ -160,7 +160,7 @@ public class Message extends SimpleEvent {
     dolly.dst = this.dst;
     dolly.operationId = this.operationId;
     dolly.body = this.body; // deep cloning?
-
+    dolly.value = this.value;
     return dolly;
   }
 

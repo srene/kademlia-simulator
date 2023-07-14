@@ -68,12 +68,18 @@ public class GossipSubDasRows extends GossipSubProtocol {
   protected void handleInitNewBlock(Message m, int myPid) {
 
     currentBlock = (Block) m.body;
-
+    logger.warning("Init block");
     for (SamplingOperation sop : samplingOp.values()) {
+      logger.warning(
+          "Reporting sampling "
+              + ((ValidatorSamplingOperation) sop).getRow()
+              + " "
+              + ((ValidatorSamplingOperation) sop).getColumn());
       GossipObserver.reportOperation(sop);
     }
     samplingOp.clear();
     if (!started) {
+      logger.warning("Assing rows/columns");
       started = true;
       row1 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
       EDSimulator.add(0, Message.makeInitJoinMessage("Row" + row1), getNode(), myPid);
@@ -102,24 +108,19 @@ public class GossipSubDasRows extends GossipSubProtocol {
 
   protected void handleMessage(Message m, int myPid) {
 
-    Sample s = (Sample) m.value;
-
-    // logger.warning("Received sample " + m.body + " " + s.getRow() + " " + s.getColumn());
     super.handleMessage(m, myPid);
-    /*String topic = (String) m.body;
-
     Sample s = (Sample) m.value;
-    mCache.put(s.getId(), s);
-    if (seen.get(topic) == null) seen.put(topic, new ArrayList<BigInteger>());
-    if (m.src == this.node || seen.get(topic).contains(s.getId())) return;
 
-    seen.get(topic).add(s.getId());
-    if (mesh.get(topic) != null) {
-      for (BigInteger id : mesh.get(topic)) {
-        m.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(myPid)).getGossipNode();
-        sendMessage(m, id, myPid);
-      }
-    }*/
+    logger.warning(
+        "dasrows handleMessage received "
+            + m.body
+            + " "
+            + s.getId()
+            + " "
+            + m.id
+            + " "
+            + m.src.getId());
+
     Sample[] samples = new Sample[] {s};
 
     List<Long> toRemove = new ArrayList<>();
@@ -153,9 +154,6 @@ public class GossipSubDasRows extends GossipSubProtocol {
                 + sop.getHops());
       }
     }
-    /*for (Long id : toRemove) {
-      samplingOp.remove(id);
-    }*/
   }
 
   @Override
@@ -182,6 +180,7 @@ public class GossipSubDasRows extends GossipSubProtocol {
         break;
       default:
         super.processEvent(node, pid, event);
+        break;
     }
   }
 

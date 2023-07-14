@@ -190,6 +190,7 @@ public class GossipObserver implements Control {
     // messages without source are control messages sent by the traffic control
     // Calculate the operation stop time and then add the opearation to the operation log.
     assert (!operations.keySet().contains(op.getId()));
+    System.out.println("Reporting op");
     if (op.getStopTime() == null) op.setStopTime(CommonState.getTime() - op.getTimestamp());
     operations.put(op.getId(), op.toMap());
   }
