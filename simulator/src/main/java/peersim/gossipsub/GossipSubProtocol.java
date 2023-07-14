@@ -220,19 +220,19 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     // destpid = dest.getKademliaProtocol().getProtocolID();
 
-    logger.warning(
-        "Sending message "
-            + m.getType()
-            + " to "
-            + destId
-            + " "
-            + ((GossipSubProtocol) dest.getProtocol(myPid)).getGossipNode().getId()
-            + " from "
-            + this.getGossipNode().getId()
-            + " "
-            + ((GossipSubProtocol) src.getProtocol(myPid)).getGossipNode().getId()
-            + " "
-            + m.getType());
+    /*logger.warning(
+    "Sending message "
+        + m.getType()
+        + " to "
+        + destId
+        + " "
+        + ((GossipSubProtocol) dest.getProtocol(myPid)).getGossipNode().getId()
+        + " from "
+        + this.getGossipNode().getId()
+        + " "
+        + ((GossipSubProtocol) src.getProtocol(myPid)).getGossipNode().getId()
+        + " "
+        + m.getType());*/
     // Get the transport protocol
     m.nrHops++;
     transport = (UnreliableTransport) (Network.prototype).getProtocol(tid);
@@ -322,9 +322,9 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     if (event instanceof Message) {
       m = (Message) event;
       // KademliaObserver.reportMsg(m, false);
-      if (m.src != null)
+      /*if (m.src != null)
         logger.warning("Message received " + m.getType() + " from " + m.src.getId());
-      else logger.warning("Message src null " + m.getType());
+      else logger.warning("Message src null " + m.getType());*/
     }
 
     // Handle the event based on its type.
