@@ -20,7 +20,6 @@ import peersim.core.CommonState;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDProtocol;
-import peersim.kademlia.KademliaObserver;
 import peersim.kademlia.SimpleEvent;
 import peersim.kademlia.das.Sample;
 import peersim.transport.UnreliableTransport;
@@ -326,9 +325,8 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
       /*if (m.src != null)
         logger.warning("Message received " + m.getType() + " from " + m.src.getId());
       else logger.warning("Message src null " + m.getType());*/
-            
-      GossipObserver.reportMsg(m, false);
 
+      GossipObserver.reportMsg(m, false);
     }
 
     // Handle the event based on its type.
