@@ -21,6 +21,7 @@ import peersim.kademlia.das.SearchTable;
 public class RandomSamplingOperation extends SamplingOperation {
 
   protected Block currentBlock;
+  protected Sample[] randomSamples;
   /**
    * default constructor
    *
@@ -41,11 +42,15 @@ public class RandomSamplingOperation extends SamplingOperation {
     this.currentBlock = currentBlock;
     this.searchTable = searchTable;
 
-    Sample[] randomSamples = currentBlock.getNRandomSamples(KademliaCommonConfigDas.N_SAMPLES);
+    randomSamples = currentBlock.getNRandomSamples(KademliaCommonConfigDas.N_SAMPLES);
     for (Sample rs : randomSamples) {
       samples.put(rs.getId(), false);
       samples.put(rs.getIdByColumn(), false);
     }
+  }
+
+  public Sample[] getRandomSamples() {
+    return randomSamples;
   }
 
   /*public BigInteger[] getSamples(BigInteger peerId) {

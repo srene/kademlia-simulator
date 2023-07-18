@@ -20,9 +20,13 @@ public class CustomDistribution implements peersim.core.Control {
 
   private int protocolID;
   private UniformRandomGenerator urg;
+  private double validatorRate;
+  private String PAR_VALIDATOR_RATE = "validator_rate";
 
   public CustomDistribution(String prefix) {
     protocolID = Configuration.getPid(prefix + "." + PAR_PROT);
+    validatorRate = Configuration.getDouble(prefix + "." + PAR_VALIDATOR_RATE);
+
     urg = new UniformRandomGenerator(GossipCommonConfig.BITS, CommonState.r);
   }
 
@@ -34,6 +38,8 @@ public class CustomDistribution implements peersim.core.Control {
    */
   public boolean execute() {
     // BigInteger tmp;
+
+    int numValidators = (int) (Network.size() * validatorRate);
 
     for (int i = 0; i < Network.size(); ++i) {
       Node generalNode = Network.get(i);
@@ -47,6 +53,12 @@ public class CustomDistribution implements peersim.core.Control {
 
       GossipSubProtocol gossipProt = ((GossipSubProtocol) (Network.get(i).getProtocol(protocolID)));
 
+      if (i < numValidators) {
+        if (gossipProt instanceof GossipSubDasRandom)
+          ((GossipSubDasRandom) gossipProt).setValidator(true);
+        if (gossipProt instanceof GossipSubDasStable)
+          ((GossipSubDasStable) gossipProt).setValidator(true);
+      }
       // generalNode.setKademliaProtocol(gossipProt);
       gossipProt.setNode(node);
       gossipProt.setProtocolID(protocolID);

@@ -22,6 +22,8 @@ public class GossipCommonConfig {
   public static int ttl = 36000;
 
   public static int BLOCK_DIM_SIZE = 512;
+
+  public static int NUM_RANDOM_SAMPLES = 75;
   /**
    * Provides short information about current Kademlia configuration
    *
