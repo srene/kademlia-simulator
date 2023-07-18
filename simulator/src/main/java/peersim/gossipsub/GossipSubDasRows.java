@@ -141,9 +141,8 @@ public class GossipSubDasRows extends GossipSubProtocol {
         if (sop.completed()) {
           // GossipObserver.reportOperation(sop);
           // toRemove.add(sop.getId());
-          //sop.setStopTime(CommonState.getTime());
+          // sop.setStopTime(CommonState.getTime());
           sop.setStopTime(CommonState.getTime() - sop.getTimestamp());
-
         }
         logger.warning(
             "Sop "
