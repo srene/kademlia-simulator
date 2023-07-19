@@ -1,7 +1,6 @@
 package peersim.gossipsub;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import peersim.core.CommonState;
 import peersim.core.Network;
@@ -13,11 +12,7 @@ import peersim.kademlia.das.Sample;
 import peersim.kademlia.das.operations.SamplingOperation;
 import peersim.kademlia.das.operations.ValidatorSamplingOperation;
 
-public class GossipSubDasStable extends GossipSubProtocol {
-
-  private LinkedHashMap<Long, SamplingOperation> samplingOp;
-
-  protected Block currentBlock;
+public class GossipSubDasStable extends GossipSubDas {
 
   // protected long time;
   private boolean started;
@@ -26,15 +21,10 @@ public class GossipSubDasStable extends GossipSubProtocol {
   private int col1;
   private int col2;
 
-  private boolean isValidator;
-
   public GossipSubDasStable(String prefix) {
     super(prefix);
-
-    samplingOp = new LinkedHashMap<>();
     // TODO Auto-generated constructor stub
     started = false;
-    isValidator = false;
   }
   /**
    * Replicate this object by returning an identical copy. It is called by the initializer and do
@@ -45,22 +35,6 @@ public class GossipSubDasStable extends GossipSubProtocol {
   public Object clone() {
     GossipSubDasStable dolly = new GossipSubDasStable(GossipSubDasStable.prefix);
     return dolly;
-  }
-
-  private void startSampling(int row, int column) {
-    logger.warning("StartSampling " + row + " " + column);
-
-    ValidatorSamplingOperation op =
-        new ValidatorSamplingOperation(
-            this.getGossipNode().getId(),
-            CommonState.getTime(),
-            currentBlock,
-            null,
-            row,
-            column,
-            true,
-            null);
-    samplingOp.put(op.getId(), op);
   }
 
   /**
@@ -103,10 +77,10 @@ public class GossipSubDasStable extends GossipSubProtocol {
         prot.getTable().addPeer("Column" + col2, this.getGossipNode().getId());
       }
     } else {
-      startSampling(row1, 0);
-      startSampling(row2, 0);
-      startSampling(0, col1);
-      startSampling(0, col2);
+      startValidatorSampling(row1, 0, "Row" + row1);
+      startValidatorSampling(row2, 0, "Row" + row2);
+      startValidatorSampling(0, col1, "Column" + col1);
+      startValidatorSampling(0, col2, "Column" + col2);
     }
   }
 

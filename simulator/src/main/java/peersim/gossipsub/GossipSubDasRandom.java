@@ -1,8 +1,5 @@
 package peersim.gossipsub;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import peersim.core.CommonState;
 import peersim.core.Network;
@@ -11,33 +8,18 @@ import peersim.edsim.EDSimulator;
 import peersim.kademlia.SimpleEvent;
 import peersim.kademlia.das.Block;
 import peersim.kademlia.das.Sample;
-import peersim.kademlia.das.operations.RandomSamplingOperation;
 import peersim.kademlia.das.operations.SamplingOperation;
 import peersim.kademlia.das.operations.ValidatorSamplingOperation;
 
-public class GossipSubDasRandom extends GossipSubProtocol {
+public class GossipSubDasRandom extends GossipSubDas {
 
-  private LinkedHashMap<Long, SamplingOperation> samplingOp;
-
-  private HashMap<Long, List<String>> samplingTopics;
-
-  protected Block currentBlock;
-
-  private boolean isValidator;
   // protected long time;
   private boolean started;
-  private int row1;
-  private int row2;
-  private int col1;
-  private int col2;
 
   public GossipSubDasRandom(String prefix) {
     super(prefix);
-    samplingOp = new LinkedHashMap<>();
-    samplingTopics = new HashMap<>();
     // TODO Auto-generated constructor stub
     started = false;
-    isValidator = false;
   }
   /**
    * Replicate this object by returning an identical copy. It is called by the initializer and do
@@ -50,50 +32,6 @@ public class GossipSubDasRandom extends GossipSubProtocol {
     return dolly;
   }
 
-  private void startValidatorSampling(int row, int column, String topic) {
-    logger.warning("Sampling operation started validator " + row + " " + column);
-
-    ValidatorSamplingOperation op =
-        new ValidatorSamplingOperation(
-            this.getGossipNode().getId(),
-            CommonState.getTime(),
-            currentBlock,
-            null,
-            row,
-            column,
-            true,
-            null);
-    samplingOp.put(op.getId(), op);
-    List<String> topics = new ArrayList<>();
-    topics.add(topic);
-    samplingTopics.put(op.getId(), topics);
-  }
-
-  private void startRandomSampling(int myPid) {
-    // logger.warning("Starting random sampling");
-    RandomSamplingOperation op =
-        new RandomSamplingOperation(
-            this.getGossipNode().getId(),
-            null,
-            CommonState.getTime(),
-            currentBlock,
-            null,
-            this.isValidator,
-            null);
-    // op.elaborateResponse(kv.getAll().toArray(new Sample[0]));
-    samplingOp.put(op.getId(), op);
-    logger.warning("Sampling operation started random");
-
-    Sample[] samples = op.getRandomSamples();
-    List<String> topics = new ArrayList<>();
-    for (Sample s : samples) {
-      EDSimulator.add(0, Message.makeInitJoinMessage("Row" + s.getRow()), getNode(), myPid);
-      EDSimulator.add(0, Message.makeInitJoinMessage("Column" + s.getColumn()), getNode(), myPid);
-      topics.add("Row" + s.getRow());
-      topics.add("Column" + s.getColumn());
-    }
-    samplingTopics.put(op.getId(), topics);
-  }
   /**
    * Start a topic query opearation.<br>
    *
@@ -119,13 +57,13 @@ public class GossipSubDasRandom extends GossipSubProtocol {
     samplingOp.clear();
     if (isValidator) {
       logger.warning("Select rows/columns");
-      row1 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
+      int row1 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
       EDSimulator.add(0, Message.makeInitJoinMessage("Row" + row1), getNode(), myPid);
-      row2 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
+      int row2 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
       EDSimulator.add(0, Message.makeInitJoinMessage("Row" + row2), getNode(), myPid);
-      col1 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
+      int col1 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
       EDSimulator.add(0, Message.makeInitJoinMessage("Column" + col1), getNode(), myPid);
-      col2 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
+      int col2 = CommonState.r.nextInt(currentBlock.getSize()) + 1;
       EDSimulator.add(0, Message.makeInitJoinMessage("Column" + col2), getNode(), myPid);
 
       for (int i = 1; i < Network.size(); i++) {
@@ -178,47 +116,6 @@ public class GossipSubDasRandom extends GossipSubProtocol {
         logger.warning("Sop " + sop.getSamples().length + " " + topic + " " + sop.getHops());
       }
     }
-    /*for (SamplingOperation sop : samplingOp.values()) {
-      if (sop instanceof ValidatorSamplingOperation) {
-        ValidatorSamplingOperation vsop = (ValidatorSamplingOperation) sop;
-
-        if (s.getRow() == vsop.getRow() || s.getColumn() == vsop.getColumn()) {
-          sop.addMessage(m.id);
-          sop.elaborateResponse(samples);
-          sop.increaseHops();
-
-          // sop.increaseHops();
-          if (sop.completed()) {
-            // GossipObserver.reportOperation(sop);
-            // toRemove.add(sop.getId());
-            // sop.setStopTime(CommonState.getTime());
-            sop.setStopTime(CommonState.getTime() - sop.getTimestamp());
-          }
-          logger.warning(
-              "Sop "
-                  + sop.getSamples().length
-                  + " "
-                  + ((ValidatorSamplingOperation) sop).getRow()
-                  + " "
-                  + ((ValidatorSamplingOperation) sop).getColumn()
-                  + " "
-                  + sop.getHops());
-        }
-      } else if (sop instanceof RandomSamplingOperation) {
-
-        RandomSamplingOperation rsop = (RandomSamplingOperation) sop;
-        if (Arrays.asList(rsop.getRandomSamples()).contains(s)) {
-          sop.addMessage(m.id);
-          sop.elaborateResponse(samples);
-          sop.increaseHops();
-          if (sop.completed()) {
-            sop.setStopTime(CommonState.getTime() - sop.getTimestamp());
-          }
-          logger.warning(
-              "RandomSamplingOperation " + sop.getSamples().length + " " + sop.getHops());
-        }
-      }
-    }*/
   }
 
   @Override
