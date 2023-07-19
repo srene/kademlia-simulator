@@ -1,7 +1,6 @@
 package peersim.gossipsub;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,7 +19,7 @@ public class GossipSubDasRandom extends GossipSubProtocol {
 
   private LinkedHashMap<Long, SamplingOperation> samplingOp;
 
-  private HashMap<Long, List<String> > samplingTopics;
+  private HashMap<Long, List<String>> samplingTopics;
 
   protected Block currentBlock;
 
@@ -52,7 +51,7 @@ public class GossipSubDasRandom extends GossipSubProtocol {
   }
 
   private void startValidatorSampling(int row, int column, String topic) {
-    logger.warning("StartSampling " + row + " " + column);
+    logger.warning("Sampling operation started validator " + row + " " + column);
 
     ValidatorSamplingOperation op =
         new ValidatorSamplingOperation(
@@ -67,7 +66,7 @@ public class GossipSubDasRandom extends GossipSubProtocol {
     samplingOp.put(op.getId(), op);
     List<String> topics = new ArrayList<>();
     topics.add(topic);
-    samplingTopics.put(op.getId(),topics);
+    samplingTopics.put(op.getId(), topics);
   }
 
   private void startRandomSampling(int myPid) {
@@ -93,7 +92,7 @@ public class GossipSubDasRandom extends GossipSubProtocol {
       topics.add("Row" + s.getRow());
       topics.add("Column" + s.getColumn());
     }
-    samplingTopics.put(op.getId(),topics);
+    samplingTopics.put(op.getId(), topics);
   }
   /**
    * Start a topic query opearation.<br>
@@ -133,10 +132,10 @@ public class GossipSubDasRandom extends GossipSubProtocol {
         prot.getTable().addPeer("Column" + col1, this.getGossipNode().getId());
         prot.getTable().addPeer("Column" + col2, this.getGossipNode().getId());
       }
-      startValidatorSampling(row1, 0,"Row"+row1);
-      startValidatorSampling(row2, 0,"Row"+row2);
-      startValidatorSampling(0, col1,"Column"+col1);
-      startValidatorSampling(0,col2,"Column"+col2);
+      startValidatorSampling(row1, 0, "Row" + row1);
+      startValidatorSampling(row2, 0, "Row" + row2);
+      startValidatorSampling(0, col1, "Column" + col1);
+      startValidatorSampling(0, col2, "Column" + col2);
     }
 
     startRandomSampling(myPid);
@@ -165,20 +164,14 @@ public class GossipSubDasRandom extends GossipSubProtocol {
 
     for (SamplingOperation sop : samplingOp.values()) {
       List<String> topics = samplingTopics.get(sop.getId());
-      if(topics.contains(topic)){
-          sop.addMessage(m.id);
-          sop.elaborateResponse(samples);
-          sop.increaseHops();   
-          if (sop.completed()) {
-            sop.setStopTime(CommonState.getTime() - sop.getTimestamp());
-          }
-          logger.warning(
-              "Sop "
-                  + sop.getSamples().length
-                  + " "
-                  + topic 
-                  + " "
-                  + sop.getHops());
+      if (topics.contains(topic)) {
+        sop.addMessage(m.id);
+        sop.elaborateResponse(samples);
+        sop.increaseHops();
+        if (sop.completed()) {
+          sop.setStopTime(CommonState.getTime() - sop.getTimestamp());
+        }
+        logger.warning("Sop " + sop.getSamples().length + " " + topic + " " + sop.getHops());
       }
     }
     /*for (SamplingOperation sop : samplingOp.values()) {
