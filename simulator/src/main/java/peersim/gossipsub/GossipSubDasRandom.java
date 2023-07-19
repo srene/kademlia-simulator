@@ -25,7 +25,7 @@ public class GossipSubDasRandom extends GossipSubProtocol {
 
   private boolean isValidator;
   // protected long time;
-  // private boolean started;
+  private boolean started;
   private int row1;
   private int row2;
   private int col1;
@@ -36,7 +36,7 @@ public class GossipSubDasRandom extends GossipSubProtocol {
     samplingOp = new LinkedHashMap<>();
     samplingTopics = new HashMap<>();
     // TODO Auto-generated constructor stub
-    // started = false;
+    started = false;
     isValidator = false;
   }
   /**
@@ -46,7 +46,7 @@ public class GossipSubDasRandom extends GossipSubProtocol {
    * @return Object
    */
   public Object clone() {
-    GossipSubDasStable dolly = new GossipSubDasStable(GossipSubDasStable.prefix);
+    GossipSubDasRandom dolly = new GossipSubDasRandom(GossipSubDasStable.prefix);
     return dolly;
   }
 
@@ -103,6 +103,10 @@ public class GossipSubDasRandom extends GossipSubProtocol {
   protected void handleInitNewBlock(Message m, int myPid) {
 
     currentBlock = (Block) m.body;
+    if (!started) {
+      started = true;
+      return;
+    }
     logger.warning("Init block");
     for (SamplingOperation sop : samplingOp.values()) {
       logger.warning(

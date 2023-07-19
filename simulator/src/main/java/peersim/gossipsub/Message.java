@@ -203,17 +203,17 @@ public class Message extends SimpleEvent {
       case MSG_JOIN:
         return "MSG_JOIN";
       case MSG_GRAFT:
-        return "MSG_GRAFT"; 
+        return "MSG_GRAFT";
       case MSG_IHAVE:
         return "MSG_IHAVE";
       case MSG_IWANT:
         return "MSG_IWANT";
       case MSG_PRUNE:
-        return "MSG_PRUNE";  
+        return "MSG_PRUNE";
       case MSG_PUBLISH:
         return "MSG_PUBLISH";
       case MSG_MESSAGE:
-        return "MSG_MESSAGE";                            
+        return "MSG_MESSAGE";
       default:
         return "UNKNOW:" + type;
     }
