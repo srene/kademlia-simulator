@@ -39,7 +39,7 @@ public abstract class GossipSubDas extends GossipSubProtocol {
    */
   public abstract Object clone();
 
-  protected void startValidatorSampling(int row, int column, String topic) {
+  protected void startValidatorSampling(int row, int column, String topic, int myPid) {
     logger.warning("Sampling operation started validator " + row + " " + column);
 
     ValidatorSamplingOperation op =
@@ -56,6 +56,7 @@ public abstract class GossipSubDas extends GossipSubProtocol {
     List<String> topics = new ArrayList<>();
     topics.add(topic);
     samplingTopics.put(op.getId(), topics);
+    EDSimulator.add(0, Message.makeInitJoinMessage(topic), getNode(), myPid);
   }
 
   protected void startRandomSampling(int myPid) {
@@ -93,7 +94,6 @@ public abstract class GossipSubDas extends GossipSubProtocol {
 
   protected void handleMessage(Message m, int myPid) {
 
-    super.handleMessage(m, myPid);
     Sample s = (Sample) m.value;
 
     logger.warning(
@@ -114,6 +114,9 @@ public abstract class GossipSubDas extends GossipSubProtocol {
 
     for (SamplingOperation sop : samplingOp.values()) {
       List<String> topics = samplingTopics.get(sop.getId());
+      if (sop instanceof RandomSamplingOperation)
+        logger.warning(
+            "Random sampling operation sample received " + topic + " " + sop.samplesCount());
       if (topics.contains(topic)) {
         sop.addMessage(m.id);
         sop.elaborateResponse(samples);
@@ -124,6 +127,7 @@ public abstract class GossipSubDas extends GossipSubProtocol {
         logger.warning("Sop " + sop.getSamples().length + " " + topic + " " + sop.getHops());
       }
     }
+    super.handleMessage(m, myPid);
   }
 
   @Override

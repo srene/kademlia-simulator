@@ -4,7 +4,6 @@ import java.math.BigInteger;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Network;
-import peersim.core.Node;
 import peersim.kademlia.UniformRandomGenerator;
 
 /**
@@ -42,7 +41,6 @@ public class CustomDistribution implements peersim.core.Control {
     int numValidators = (int) (Network.size() * validatorRate);
 
     for (int i = 0; i < Network.size(); ++i) {
-      Node generalNode = Network.get(i);
       BigInteger id;
       // BigInteger attackerID = null;
       GossipNode node;
@@ -59,7 +57,6 @@ public class CustomDistribution implements peersim.core.Control {
         if (gossipProt instanceof GossipSubDasStable)
           ((GossipSubDasStable) gossipProt).setValidator(true);
       }
-      // generalNode.setKademliaProtocol(gossipProt);
       gossipProt.setNode(node);
       gossipProt.setProtocolID(protocolID);
     }

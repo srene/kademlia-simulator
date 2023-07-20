@@ -1,13 +1,10 @@
 package peersim.gossipsub;
 
-import java.util.List;
 import peersim.core.CommonState;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDSimulator;
-import peersim.kademlia.SimpleEvent;
 import peersim.kademlia.das.Block;
-import peersim.kademlia.das.Sample;
 import peersim.kademlia.das.operations.SamplingOperation;
 import peersim.kademlia.das.operations.ValidatorSamplingOperation;
 
@@ -74,97 +71,12 @@ public class GossipSubDasRandom extends GossipSubDas {
         prot.getTable().addPeer("Column" + col1, this.getGossipNode().getId());
         prot.getTable().addPeer("Column" + col2, this.getGossipNode().getId());
       }
-      startValidatorSampling(row1, 0, "Row" + row1);
-      startValidatorSampling(row2, 0, "Row" + row2);
-      startValidatorSampling(0, col1, "Column" + col1);
-      startValidatorSampling(0, col2, "Column" + col2);
+      startValidatorSampling(row1, 0, "Row" + row1, myPid);
+      startValidatorSampling(row2, 0, "Row" + row2, myPid);
+      startValidatorSampling(0, col1, "Column" + col1, myPid);
+      startValidatorSampling(0, col2, "Column" + col2, myPid);
     }
 
     startRandomSampling(myPid);
   }
-
-  protected void handleMessage(Message m, int myPid) {
-
-    super.handleMessage(m, myPid);
-    Sample s = (Sample) m.value;
-
-    logger.warning(
-        "dasrows handleMessage received "
-            + m.body
-            + " "
-            + s.getId()
-            + " "
-            + m.id
-            + " "
-            + m.src.getId());
-
-    Sample[] samples = new Sample[] {s};
-
-    String topic = (String) m.body;
-
-    logger.warning("Received message sample " + s.getRow() + " " + s.getColumn() + " " + topic);
-
-    for (SamplingOperation sop : samplingOp.values()) {
-      List<String> topics = samplingTopics.get(sop.getId());
-      if (topics.contains(topic)) {
-        sop.addMessage(m.id);
-        sop.elaborateResponse(samples);
-        sop.increaseHops();
-        if (sop.completed()) {
-          sop.setStopTime(CommonState.getTime() - sop.getTimestamp());
-        }
-        logger.warning("Sop " + sop.getSamples().length + " " + topic + " " + sop.getHops());
-      }
-    }
-  }
-
-  @Override
-  public void processEvent(Node node, int pid, Object event) {
-    // Set the Kademlia ID as the current process ID - assuming Pid stands for process ID.
-    this.gossipid = pid;
-    Message m;
-
-    // If the event is a message, report the message to the Kademlia observer.
-    if (event instanceof Message) {
-      m = (Message) event;
-      // KademliaObserver.reportMsg(m, false);
-    }
-
-    // Handle the event based on its type.
-    switch (((SimpleEvent) event).getType()) {
-      case Message.MSG_INIT_NEW_BLOCK:
-        m = (Message) event;
-        handleInitNewBlock(m, pid);
-        break;
-      case Message.MSG_MESSAGE:
-        m = (Message) event;
-        handleMessage(m, pid);
-        break;
-      default:
-        super.processEvent(node, pid, event);
-        break;
-    }
-  }
-
-  public void setValidator(boolean isValidator) {
-    this.isValidator = isValidator;
-  }
-
-  /*private int getRow(String topic) {
-    if (topic.length() > 4) {
-      if (topic.substring(0, 4).equals("Row")) {
-        return Integer.valueOf(topic.substring(4, topic.length()));
-      }
-    }
-    return 0;
-  }
-
-  private int getColumn(String topic) {
-    if (topic.length() > 6) {
-      if (topic.substring(0, 7).equals("Column")) {
-        return Integer.valueOf(topic.substring(7, topic.length()));
-      }
-    }
-    return 0;
-  }*/
 }

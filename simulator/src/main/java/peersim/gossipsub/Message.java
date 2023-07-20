@@ -195,6 +195,10 @@ public class Message extends SimpleEvent {
   public static final Message makeInitNewBlock(Object body) {
     return new Message(MSG_INIT_NEW_BLOCK, body);
   }
+
+  public static final Message makeLeaveMessage(Object body) {
+    return new Message(MSG_LEAVE, body);
+  }
   // ______________________________________________________________________________________________
   public String typeToString() {
     switch (type) {
@@ -214,6 +218,8 @@ public class Message extends SimpleEvent {
         return "MSG_PUBLISH";
       case MSG_MESSAGE:
         return "MSG_MESSAGE";
+      case MSG_LEAVE:
+        return "MSG_LEAVE";
       default:
         return "UNKNOW:" + type;
     }

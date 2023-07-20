@@ -99,7 +99,7 @@ public class TrafficGenerator implements Control {
         }
       }
 
-    } else if (second) {
+    } else /*if (second)*/ {
       Block b = new Block(GossipCommonConfig.BLOCK_DIM_SIZE, ID_GENERATOR);
 
       Node n = Network.get(0);
