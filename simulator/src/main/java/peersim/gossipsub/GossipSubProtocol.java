@@ -504,6 +504,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
       for (BigInteger id : p) {
         sendPruneMessage(id, topic);
       }
+      mesh.remove(topic);
     }
   }
 

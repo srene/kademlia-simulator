@@ -71,7 +71,7 @@ public class GossipSubDasStable extends GossipSubDas {
       if (sop instanceof RandomSamplingOperation) {
         List<String> topics = samplingTopics.get(sop.getId());
         for (String topic : topics) {
-          EDSimulator.add(0, Message.makePruneMessage(topic), getNode(), myPid);
+          EDSimulator.add(0, Message.makeLeaveMessage(topic), getNode(), myPid);
         }
       }
     }
