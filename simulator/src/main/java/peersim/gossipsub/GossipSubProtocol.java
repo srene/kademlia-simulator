@@ -219,19 +219,20 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     // destpid = dest.getKademliaProtocol().getProtocolID();
 
-    /*logger.warning(
-    "Sending message "
-        + m.getType()
-        + " to "
-        + destId
-        + " "
-        + ((GossipSubProtocol) dest.getProtocol(myPid)).getGossipNode().getId()
-        + " from "
-        + this.getGossipNode().getId()
-        + " "
-        + ((GossipSubProtocol) src.getProtocol(myPid)).getGossipNode().getId()
-        + " "
-        + m.getType());*/
+    if (m.getType() == Message.MSG_PUBLISH || m.getType() == Message.MSG_MESSAGE)
+      logger.warning(
+          "Sending message "
+              + m.getType()
+              + " to "
+              + destId
+              + " "
+              + ((GossipSubProtocol) dest.getProtocol(myPid)).getGossipNode().getId()
+              + " from "
+              + this.getGossipNode().getId()
+              + " "
+              + ((GossipSubProtocol) src.getProtocol(myPid)).getGossipNode().getId()
+              + " "
+              + m.getType());
     // Get the transport protocol
     m.nrHops++;
     transport = (UnreliableTransport) (Network.prototype).getProtocol(tid);
@@ -415,8 +416,6 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
         HashSet<BigInteger> ids = peers.getPeers(topic);
 
-        // if (ids != null) Collections.shuffle(ids);
-        // else break;
         if (ids == null) break;
         int sent = 0;
         boolean found = false;
@@ -509,7 +508,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
   private void handleGraft(Message m, int myPid) {
     String topic = (String) m.body;
-    logger.warning("handleGraft received " + topic + " from:" + m.src.getId());
+    logger.info("handleGraft received " + topic + " from:" + m.src.getId());
     // if (mesh.get(topic) == null) mesh.put(topic, new ArrayList<BigInteger>());
     if (mesh.get(topic) != null) mesh.get(topic).add(m.src.getId());
     peers.addPeer(topic, m.src.getId());

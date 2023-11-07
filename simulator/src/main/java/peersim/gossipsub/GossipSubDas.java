@@ -122,11 +122,11 @@ public class GossipSubDas extends GossipSubProtocol {
     logger.warning("Received message sample " + b.getId() + " " + topic);
 
     for (GossipBlockOperation sop : samplingOp.values()) {
-      sop.elaborateResponse(b);
-      if (sop.isCompleted()) {
+      if (!sop.isCompleted()) {
         sop.addHops(m.getHops());
         sop.setStopTime(CommonState.getTime() - sop.getTimestamp());
       }
+      sop.elaborateResponse(b);
     }
 
     super.handleMessage(m, myPid);

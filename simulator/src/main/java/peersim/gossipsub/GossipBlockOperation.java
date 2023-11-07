@@ -37,6 +37,7 @@ public class GossipBlockOperation extends FindOperation {
     result.put("hops", this.nrHops);
     result.put("num_messages", getMessages().size());
     result.put("block_id", this.currentBlock.getId());
+    result.put("completed", isCompleted());
     return result;
   }
 }

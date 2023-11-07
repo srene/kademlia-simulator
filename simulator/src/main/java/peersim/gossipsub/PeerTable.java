@@ -1,8 +1,11 @@
 package peersim.gossipsub;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class PeerTable {
 
@@ -24,19 +27,23 @@ public class PeerTable {
     }
   }
 
-  public HashSet<BigInteger> getPeers(String topic) {
-    return peerMap.get(topic);
+  public List<BigInteger> getPeers(String topic) {
+    List<BigInteger> peers = new ArrayList<>(peerMap.get(topic));
+    Collections.shuffle(peers);
+    // return peerMap.get(topic);
+    return peers;
   }
 
-  public HashSet<BigInteger> getNPeers(String topic, int n, HashSet<BigInteger> peers) {
-    HashSet<BigInteger> nodes = new HashSet<>();
-    if (peerMap.get(topic) != null) {
-      HashSet<BigInteger> topicPeers = peerMap.get(topic);
-      for (BigInteger id : topicPeers) {
-        if (!peers.contains(id)) nodes.add(id);
-      }
+  public List<BigInteger> getNPeers(String topic, int n, HashSet<BigInteger> initialPeers) {
+    List<BigInteger> peers = new ArrayList<>(peerMap.get(topic));
+    peers.removeAll(initialPeers);
+    Collections.shuffle(peers);
+
+    List<BigInteger> peersResult = new ArrayList<>();
+    for(BigInteger id : peers){
+      if(peersResult.size()<n)peersResult.add(id);
     }
 
-    return nodes;
+    return peersResult;
   }
 }

@@ -90,7 +90,13 @@ public class TrafficGenerator implements Control {
       String topic = "blockChannel";
       Node n = Network.get(0);
       EDSimulator.add(0, Message.makePublishMessage(topic, b), n, protocol);
-
+      System.out.println(
+          "Sending block "
+              + b.getId()
+              + " from "
+              + ((GossipSubDas) n.getProtocol(protocol)).getGossipNode().getId()
+              + " at "
+              + CommonState.getTime());
       /*for (int i = 0; i < GossipCommonConfig.BLOCK_DIM_SIZE; i++) {
         for (int j = 0; j < GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
           Sample s = b.getSample(i, j);
