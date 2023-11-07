@@ -1,11 +1,6 @@
 package peersim.gossipsub;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -232,9 +227,11 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
               + " "
               + ((GossipSubProtocol) src.getProtocol(myPid)).getGossipNode().getId()
               + " "
-              + m.getType());
+              + m.getType()
+              + " "
+              + m.getHops());
     // Get the transport protocol
-    m.nrHops++;
+    m.increaseHops();
     transport = (UnreliableTransport) (Network.prototype).getProtocol(tid);
 
     // Send the message
@@ -372,7 +369,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     for (String topic : mesh.keySet()) {
       logger.warning("heartbeat execute " + mesh.get(topic).size() + " " + topic);
       if (mesh.get(topic).size() < GossipCommonConfig.D_low) {
-        HashSet<BigInteger> nodes =
+        List<BigInteger> nodes =
             peers.getNPeers(topic, GossipCommonConfig.D - mesh.get(topic).size(), mesh.get(topic));
         nodes.remove(this.node.getId());
         mesh.get(topic).addAll(nodes);
@@ -397,7 +394,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         fanoutExpirations.remove(topic);
       } else {
         if (fanout.get(topic).size() < GossipCommonConfig.D) {
-          HashSet<BigInteger> nodes =
+          List<BigInteger> nodes =
               peers.getNPeers(
                   topic, GossipCommonConfig.D - mesh.get(topic).size(), mesh.get(topic));
           fanout.get(topic).addAll(nodes);
@@ -414,7 +411,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
       List<Long> msgs = seen.get(topic);
       if (msgs != null) {
 
-        HashSet<BigInteger> ids = peers.getPeers(topic);
+        List<BigInteger> ids = peers.getPeers(topic);
 
         if (ids == null) break;
         int sent = 0;
@@ -465,7 +462,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
       mesh.put(topic, p);
       fanout.remove(topic);
       if (p.size() < GossipCommonConfig.D) {
-        HashSet<BigInteger> p2 =
+        List<BigInteger> p2 =
             peers.getNPeers(topic, GossipCommonConfig.D - p.size(), mesh.get(topic));
         p2.remove(this.node.getId());
         for (BigInteger id : p2) {
@@ -473,7 +470,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         }
       }
     } else if (mesh.get(topic) == null) {
-      HashSet<BigInteger> p = peers.getPeers(topic);
+      List<BigInteger> p = peers.getPeers(topic);
       mesh.put(topic, new HashSet<BigInteger>());
 
       if (p != null) {
@@ -554,6 +551,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         Message msg = Message.makeMessage((String) m.body, mCache.get(id));
         msg.src = this.node;
         msg.dst = m.src;
+        msg.publisher = ((Block) msg.value).getPublisher();
         long cid = ((Block) msg.value).getId();
 
         logger.info("sending message iwant " + cid + " " + msg.id + " to " + msg.dst.getId());
@@ -592,6 +590,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
         Message msg = Message.makeMessage(topic, b);
         msg.src = this.node;
+        msg.publisher = this.node;
         msg.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(gossipid)).getGossipNode();
         sendMessage(msg, id, gossipid);
       }
@@ -599,16 +598,20 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
   }
 
   protected void handleMessage(Message m, int myPid) {
-    String topic = (String) m.body;
-    /*if (topic.equals("Discovery")) {
-      String[] disc = ((String) m.value).split(":");
-      logger.warning("Discovery message rcvd " + disc[0] + " " + disc[1] + m.src.getId());
-      peers.addPeer(disc[0], new BigInteger(disc[1]));
-    }*/
 
-    // BigInteger cid = getValueId(m.value);
+    logger.warning("handleMessage received from " + m.src.getId());
+    if (m.publisher.getId().compareTo(this.getGossipNode().getId()) == 0) return;
+    if (m.src.getId().compareTo(this.getGossipNode().getId()) == 0) return;
+
+    String topic = (String) m.body;
+
     Block b = (Block) m.value;
     long cid = b.getId();
+
+    if (seen.get(topic) == null) seen.put(topic, new ArrayList<Long>());
+    if (seen.get(topic).contains(cid)) return;
+    seen.get(topic).add(cid);
+
     mCache.put(cid, b);
     logger.warning(
         "handleMessage received "
@@ -620,21 +623,19 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
             + " "
             + m.src.getId()
             + " "
-            + m.nrHops);
-
-    if (seen.get(topic) == null) seen.put(topic, new ArrayList<Long>());
-    if (seen.get(topic).contains(cid)) return;
-
-    seen.get(topic).add(cid);
+            + m.nrHops
+            + " "
+            + m.publisher.getId());
 
     if (mesh.get(topic) != null) {
       HashSet<BigInteger> nodesToSend = mesh.get(topic);
       nodesToSend.remove(m.src.getId());
       nodesToSend.remove(this.node.getId());
+      nodesToSend.remove(m.publisher.getId());
       for (BigInteger id : nodesToSend) {
         Message mbis = m.copy();
         mbis.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(myPid)).getGossipNode();
-        mbis.src = this.node;
+        mbis.src = this.getGossipNode();
         logger.warning(
             "handleMessage resending " + cid + " " + m.id + " to " + id + " " + m.dst.getId());
         sendMessage(mbis, id, myPid);
@@ -642,7 +643,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     }
   }
 
-  private BigInteger getValueId(Object obj) {
+  /*private BigInteger getValueId(Object obj) {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     ObjectOutputStream oos;
     byte[] hash;
@@ -662,7 +663,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     }
 
     return new BigInteger(1, hash);
-  }
+  }*/
 
   public PeerTable getTable() {
     return this.peers;

@@ -76,6 +76,8 @@ public class Message extends SimpleEvent {
   /** Source node of the message: has to be filled at application level */
   public GossipNode src;
 
+  public GossipNode publisher;
+
   /** Available to count the number of hops the message did. */
   public int nrHops = 0;
 
@@ -160,6 +162,8 @@ public class Message extends SimpleEvent {
     dolly.operationId = this.operationId;
     dolly.body = this.body; // deep cloning?
     dolly.value = this.value;
+    dolly.nrHops = this.nrHops;
+    dolly.publisher = this.publisher;
     return dolly;
   }
 

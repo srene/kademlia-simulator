@@ -4,10 +4,12 @@ public class Block {
 
   private long id;
   private int size;
+  private GossipNode publisher;
 
-  public Block(long id, int size) {
+  public Block(long id, int size, GossipNode publisher) {
     this.id = id;
     this.size = size;
+    this.publisher = publisher;
   }
 
   public long getId() {
@@ -16,5 +18,9 @@ public class Block {
 
   public int getSize() {
     return size;
+  }
+
+  public GossipNode getPublisher() {
+    return publisher;
   }
 }

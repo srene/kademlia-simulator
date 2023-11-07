@@ -7,7 +7,7 @@ import peersim.core.CommonState;
 import peersim.core.Node;
 import peersim.kademlia.SimpleEvent;
 
-public class GossipSubDas extends GossipSubProtocol {
+public class GossipSubBlock extends GossipSubProtocol {
 
   protected LinkedHashMap<Long, GossipBlockOperation> samplingOp;
 
@@ -17,7 +17,7 @@ public class GossipSubDas extends GossipSubProtocol {
 
   protected boolean isValidator;
 
-  public GossipSubDas(String prefix) {
+  public GossipSubBlock(String prefix) {
     super(prefix);
     samplingOp = new LinkedHashMap<>();
     // samplingTopics = new HashMap<>();
@@ -31,7 +31,7 @@ public class GossipSubDas extends GossipSubProtocol {
    * @return Object
    */
   public Object clone() {
-    GossipSubDas dolly = new GossipSubDas(GossipSubDas.prefix);
+    GossipSubBlock dolly = new GossipSubBlock(GossipSubBlock.prefix);
     return dolly;
   }
 
@@ -41,51 +41,7 @@ public class GossipSubDas extends GossipSubProtocol {
         new GossipBlockOperation(this.getGossipNode().getId(), CommonState.getTime(), b);
     samplingOp.put(op.getId(), op);
   }
-  /*protected void startValidatorSampling(int row, int column, String topic, int myPid) {
-    logger.warning("Sampling operation started validator " + row + " " + column);
 
-    ValidatorSamplingOperation op =
-        new ValidatorSamplingOperation(
-            this.getGossipNode().getId(),
-            CommonState.getTime(),
-            currentBlock,
-            null,
-            row,
-            column,
-            true,
-            null);
-    samplingOp.put(op.getId(), op);
-    List<String> topics = new ArrayList<>();
-    topics.add(topic);
-    samplingTopics.put(op.getId(), topics);
-    EDSimulator.add(0, Message.makeInitJoinMessage(topic), getNode(), myPid);
-  }
-
-  protected void startRandomSampling(int myPid) {
-    // logger.warning("Starting random sampling");
-    RandomSamplingOperation op =
-        new RandomSamplingOperation(
-            this.getGossipNode().getId(),
-            null,
-            CommonState.getTime(),
-            currentBlock,
-            null,
-            this.isValidator,
-            null);
-    // op.elaborateResponse(kv.getAll().toArray(new Sample[0]));
-    samplingOp.put(op.getId(), op);
-    logger.warning("Sampling operation started random");
-
-    Sample[] samples = op.getRandomSamples();
-    List<String> topics = new ArrayList<>();
-    for (Sample s : samples) {
-      EDSimulator.add(0, Message.makeInitJoinMessage("Row" + s.getRow()), getNode(), myPid);
-      EDSimulator.add(0, Message.makeInitJoinMessage("Column" + s.getColumn()), getNode(), myPid);
-      topics.add("Row" + s.getRow());
-      topics.add("Column" + s.getColumn());
-    }
-    samplingTopics.put(op.getId(), topics);
-  }*/
   /**
    * Start a topic query opearation.<br>
    *
@@ -106,25 +62,17 @@ public class GossipSubDas extends GossipSubProtocol {
 
     Block b = (Block) m.value;
 
-    logger.warning(
-        "dasrows handleMessage received "
-            + m.body
-            + " "
-            + b.getId()
-            + " "
-            + m.id
-            + " "
-            + m.src.getId());
-
     // Sample[] samples = new Sample[] {s};
 
     String topic = (String) m.body;
-    logger.warning("Received message sample " + b.getId() + " " + topic);
 
     for (GossipBlockOperation sop : samplingOp.values()) {
       if (!sop.isCompleted()) {
+        logger.warning("Received message block " + b.getId() + " " + topic + " " + m.getHops());
         sop.addHops(m.getHops());
         sop.setStopTime(CommonState.getTime() - sop.getTimestamp());
+      } else {
+        logger.warning("Received extra copy " + b.getId() + " " + topic + " " + m.getHops());
       }
       sop.elaborateResponse(b);
     }

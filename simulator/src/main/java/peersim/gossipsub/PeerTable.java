@@ -28,20 +28,24 @@ public class PeerTable {
   }
 
   public List<BigInteger> getPeers(String topic) {
-    List<BigInteger> peers = new ArrayList<>(peerMap.get(topic));
+    List<BigInteger> peers;
+    if (peerMap.get(topic) != null) peers = new ArrayList<>(peerMap.get(topic));
+    else peers = new ArrayList<>();
     Collections.shuffle(peers);
     // return peerMap.get(topic);
     return peers;
   }
 
   public List<BigInteger> getNPeers(String topic, int n, HashSet<BigInteger> initialPeers) {
-    List<BigInteger> peers = new ArrayList<>(peerMap.get(topic));
+    List<BigInteger> peers;
+    if (peerMap.get(topic) != null) peers = new ArrayList<>(peerMap.get(topic));
+    else peers = new ArrayList<>();
     peers.removeAll(initialPeers);
     Collections.shuffle(peers);
 
     List<BigInteger> peersResult = new ArrayList<>();
-    for(BigInteger id : peers){
-      if(peersResult.size()<n)peersResult.add(id);
+    for (BigInteger id : peers) {
+      if (peersResult.size() < n) peersResult.add(id);
     }
 
     return peersResult;

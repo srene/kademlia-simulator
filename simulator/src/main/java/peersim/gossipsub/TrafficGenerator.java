@@ -75,12 +75,19 @@ public class TrafficGenerator implements Control {
           prot2.getTable().addPeer(topic, id);
         }
         EDSimulator.add(
-            CommonState.r.nextLong(50 * 200), Message.makeInitJoinMessage(topic), n, protocol);
+            CommonState.r.nextLong(200), Message.makeInitJoinMessage(topic), n, protocol);
         // }
       }
 
-    } else if (ID_GENERATOR > 50) {
-      Block b = new Block(ID_GENERATOR, GossipCommonConfig.BLOCK_SIZE);
+    } else /*if (second)*/ {
+
+      Node n = Network.get(0);
+
+      Block b =
+          new Block(
+              ID_GENERATOR,
+              GossipCommonConfig.BLOCK_SIZE,
+              ((GossipSubBlock) n.getProtocol(protocol)).getGossipNode());
 
       for (int i = 1; i < Network.size(); i++) {
         Node n2 = Network.get(i);
@@ -88,13 +95,12 @@ public class TrafficGenerator implements Control {
       }
 
       String topic = "blockChannel";
-      Node n = Network.get(0);
       EDSimulator.add(0, Message.makePublishMessage(topic, b), n, protocol);
       System.out.println(
           "Sending block "
               + b.getId()
               + " from "
-              + ((GossipSubDas) n.getProtocol(protocol)).getGossipNode().getId()
+              + ((GossipSubBlock) n.getProtocol(protocol)).getGossipNode().getId()
               + " at "
               + CommonState.getTime());
       /*for (int i = 0; i < GossipCommonConfig.BLOCK_DIM_SIZE; i++) {

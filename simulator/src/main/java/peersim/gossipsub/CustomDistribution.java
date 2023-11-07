@@ -52,7 +52,7 @@ public class CustomDistribution implements peersim.core.Control {
       GossipSubProtocol gossipProt = ((GossipSubProtocol) (Network.get(i).getProtocol(protocolID)));
 
       if (i < numValidators) {
-        ((GossipSubDas) gossipProt).setValidator(true);
+        ((GossipSubBlock) gossipProt).setValidator(true);
       }
       gossipProt.setNode(node);
       gossipProt.setProtocolID(protocolID);
