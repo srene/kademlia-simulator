@@ -163,6 +163,14 @@ public class Message extends SimpleEvent {
     return dolly;
   }
 
+  public void increaseHops() {
+    this.nrHops++;
+  }
+
+  public int getHops() {
+    return this.nrHops;
+  }
+
   public static final Message makeInitJoinMessage(Object body) {
     return new Message(MSG_JOIN, body);
   }
