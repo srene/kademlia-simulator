@@ -1,6 +1,5 @@
 package peersim.gossipsub;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,11 +171,11 @@ public class Message extends SimpleEvent {
     return new Message(MSG_GRAFT, topic);
   }
 
-  public static final Message makeIHaveMessage(String topic, List<BigInteger> ids) {
+  public static final Message makeIHaveMessage(String topic, List<Long> ids) {
     return new Message(MSG_IHAVE, topic, ids);
   }
 
-  public static final Message makeIWantMessage(String topic, List<BigInteger> ids) {
+  public static final Message makeIWantMessage(String topic, List<Long> ids) {
     return new Message(MSG_IWANT, topic, ids);
   }
 

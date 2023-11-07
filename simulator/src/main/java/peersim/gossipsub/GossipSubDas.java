@@ -1,26 +1,19 @@
 package peersim.gossipsub;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import peersim.core.CommonState;
 import peersim.core.Node;
-import peersim.edsim.EDSimulator;
 import peersim.kademlia.SimpleEvent;
-import peersim.kademlia.das.Block;
-import peersim.kademlia.das.Sample;
-import peersim.kademlia.das.operations.RandomSamplingOperation;
 import peersim.kademlia.das.operations.SamplingOperation;
-import peersim.kademlia.das.operations.ValidatorSamplingOperation;
 
-public abstract class GossipSubDas extends GossipSubProtocol {
+public class GossipSubDas extends GossipSubProtocol {
 
   protected LinkedHashMap<Long, SamplingOperation> samplingOp;
 
   protected HashMap<Long, List<String>> samplingTopics;
 
-  protected Block currentBlock;
+  // protected Block currentBlock;
 
   protected boolean isValidator;
 
@@ -37,9 +30,12 @@ public abstract class GossipSubDas extends GossipSubProtocol {
    *
    * @return Object
    */
-  public abstract Object clone();
+  public Object clone() {
+    GossipSubDas dolly = new GossipSubDas(GossipSubDas.prefix);
+    return dolly;
+  }
 
-  protected void startValidatorSampling(int row, int column, String topic, int myPid) {
+  /*protected void startValidatorSampling(int row, int column, String topic, int myPid) {
     logger.warning("Sampling operation started validator " + row + " " + column);
 
     ValidatorSamplingOperation op =
@@ -83,36 +79,38 @@ public abstract class GossipSubDas extends GossipSubProtocol {
       topics.add("Column" + s.getColumn());
     }
     samplingTopics.put(op.getId(), topics);
-  }
+  }*/
   /**
    * Start a topic query opearation.<br>
    *
    * @param m Message received (contains the node to find)
    * @param myPid the sender Pid
    */
-  protected abstract void handleInitNewBlock(Message m, int myPid);
+  protected void handleInitNewBlock(Message m, int myPid) {
+    logger.warning("Init block received");
+  }
 
   protected void handleMessage(Message m, int myPid) {
 
-    Sample s = (Sample) m.value;
+    Block b = (Block) m.value;
 
     logger.warning(
         "dasrows handleMessage received "
             + m.body
             + " "
-            + s.getId()
+            + b.getId()
             + " "
             + m.id
             + " "
             + m.src.getId());
 
-    Sample[] samples = new Sample[] {s};
+    // Sample[] samples = new Sample[] {s};
 
     String topic = (String) m.body;
 
-    logger.warning("Received message sample " + s.getRow() + " " + s.getColumn() + " " + topic);
+    logger.warning("Received message sample " + b.getId() + " " + topic);
 
-    for (SamplingOperation sop : samplingOp.values()) {
+    /*for (SamplingOperation sop : samplingOp.values()) {
       List<String> topics = samplingTopics.get(sop.getId());
       if (sop instanceof RandomSamplingOperation)
         logger.warning(
@@ -126,7 +124,7 @@ public abstract class GossipSubDas extends GossipSubProtocol {
         }
         logger.warning("Sop " + sop.getSamples().length + " " + topic + " " + sop.getHops());
       }
-    }
+    }*/
     super.handleMessage(m, myPid);
   }
 

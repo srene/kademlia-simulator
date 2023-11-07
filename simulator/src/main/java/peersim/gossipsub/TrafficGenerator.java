@@ -7,8 +7,6 @@ import peersim.core.Control;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDSimulator;
-import peersim.kademlia.das.Block;
-import peersim.kademlia.das.Sample;
 
 /**
  * This control generates samples every 5 min that are stored in a single node (builder) and starts
@@ -26,13 +24,7 @@ public class TrafficGenerator implements Control {
   /** MSPastry Protocol to act */
   private static final String PAR_PROT = "protocol";
 
-  /** Mapping function for samples */
-  final String PAR_MAP_FN = "mapping_fn";
-
-  /** Number of sample copies stored per node */
-  final String PAR_NUM_COPIES = "sample_copy_per_node";
-
-  final String PAR_BLK_DIM_SIZE = "block_dim_size";
+  final String PAR_BLK_DIM_SIZE = "block_size";
 
   int mapfn;
 
@@ -45,8 +37,8 @@ public class TrafficGenerator implements Control {
   // ______________________________________________________________________________________________
   public TrafficGenerator(String prefix) {
 
-    GossipCommonConfig.BLOCK_DIM_SIZE =
-        Configuration.getInt(prefix + "." + PAR_BLK_DIM_SIZE, GossipCommonConfig.BLOCK_DIM_SIZE);
+    GossipCommonConfig.BLOCK_SIZE =
+        Configuration.getInt(prefix + "." + PAR_BLK_DIM_SIZE, GossipCommonConfig.BLOCK_SIZE);
 
     protocol = Configuration.getPid(prefix + "." + PAR_PROT);
   }
@@ -68,46 +60,38 @@ public class TrafficGenerator implements Control {
     if (first) {
       first = false;
       second = true;
-      Block b = new Block(GossipCommonConfig.BLOCK_DIM_SIZE, ID_GENERATOR);
+      // Block b = new Block(ID_GENERATOR, GossipCommonConfig.BLOCK_SIZE);
 
       for (int i = 0; i < Network.size(); i++) {
         Node n = Network.get(i);
         GossipSubProtocol prot = (GossipSubProtocol) n.getProtocol(protocol);
         BigInteger id = prot.getGossipNode().getId();
-        if (i == 0) {
-          System.out.println("Builder " + id);
-          for (int l = 1; l < Network.size(); l++) {
-            Node n2 = Network.get(l);
-            GossipSubProtocol prot2 = (GossipSubProtocol) n2.getProtocol(protocol);
-            for (int j = 1; j <= GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
-              String topic = "Row" + j;
-              prot2.getTable().addPeer(topic, id);
-              topic = "Column" + j;
-              prot2.getTable().addPeer(topic, id);
-            }
-            EDSimulator.add(0, generateNewBlockMessage(b), n2, protocol);
-          }
-
-          for (int j = 1; j <= GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
-            String topic = "Row" + j;
-            EDSimulator.add(0, Message.makeInitJoinMessage(topic), n, protocol);
-            topic = "Column" + j;
-            EDSimulator.add(0, Message.makeInitJoinMessage(topic), n, protocol);
-          }
-        } else {
-          break;
+        // if (i == 0) {
+        // System.out.println("Sequencer " + id);
+        String topic = "blockChannel";
+        for (int l = 1; l < Network.size(); l++) {
+          Node n2 = Network.get(l);
+          GossipSubProtocol prot2 = (GossipSubProtocol) n2.getProtocol(protocol);
+          prot2.getTable().addPeer(topic, id);
         }
+        EDSimulator.add(
+            CommonState.r.nextLong(50 * 200), Message.makeInitJoinMessage(topic), n, protocol);
+        // }
       }
 
-    } else /*if (second)*/ {
-      Block b = new Block(GossipCommonConfig.BLOCK_DIM_SIZE, ID_GENERATOR);
+    } else if (ID_GENERATOR > 50) {
+      Block b = new Block(ID_GENERATOR, GossipCommonConfig.BLOCK_SIZE);
 
-      Node n = Network.get(0);
       for (int i = 1; i < Network.size(); i++) {
         Node n2 = Network.get(i);
-        EDSimulator.add(1, generateNewBlockMessage(b), n2, protocol);
+        EDSimulator.add(0, generateNewBlockMessage(b), n2, protocol);
       }
-      for (int i = 0; i < GossipCommonConfig.BLOCK_DIM_SIZE; i++) {
+
+      String topic = "blockChannel";
+      Node n = Network.get(0);
+      EDSimulator.add(0, Message.makePublishMessage(topic, b), n, protocol);
+
+      /*for (int i = 0; i < GossipCommonConfig.BLOCK_DIM_SIZE; i++) {
         for (int j = 0; j < GossipCommonConfig.BLOCK_DIM_SIZE; j++) {
           Sample s = b.getSample(i, j);
           String topic = "Row" + (s.getRow());
@@ -116,13 +100,13 @@ public class TrafficGenerator implements Control {
           EDSimulator.add(10, Message.makePublishMessage(topic, s), n, protocol);
         }
       }
-      /*for (int i = 1; i < Network.size(); i++) {
+      for (int i = 1; i < Network.size(); i++) {
         Node n2 = Network.get(i);
         EDSimulator.add(0, generateNewBlockMessage(b), n2, protocol);
       }*/
       second = false;
-      ID_GENERATOR++;
     }
+    ID_GENERATOR++;
     return false;
   }
 

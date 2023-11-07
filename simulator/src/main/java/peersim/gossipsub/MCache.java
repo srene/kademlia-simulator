@@ -1,6 +1,5 @@
 package peersim.gossipsub;
 
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Timer;
@@ -13,7 +12,7 @@ import java.util.TimerTask;
  * @version 0.1
  */
 class TimeoutMemoryStore extends TimerTask {
-  private BigInteger id;
+  private long id;
   private MCache kv;
 
   /**
@@ -21,16 +20,14 @@ class TimeoutMemoryStore extends TimerTask {
    *
    * @param key The key to use & store
    */
-  public TimeoutMemoryStore(BigInteger id, MCache kv) {
+  public TimeoutMemoryStore(long id, MCache kv) {
     this.id = id;
     this.kv = kv;
   }
 
   @Override
   public void run() {
-    if (this.id != null) {
-      kv.delete(this.id);
-    }
+    kv.delete(this.id);
   }
 }
 
@@ -42,7 +39,7 @@ class TimeoutMemoryStore extends TimerTask {
  */
 public class MCache {
   // This will store any kind of object, related to a specific key value in string
-  private HashMap<BigInteger, Object> mem;
+  private HashMap<Long, Object> mem;
 
   public MCache() {
     mem = new HashMap<>();
@@ -53,7 +50,7 @@ public class MCache {
    * @param id The key of the object to store
    * @param obj The object to store
    */
-  public void put(BigInteger id, Object obj) {
+  public void put(long id, Object obj) {
     put(id, obj, 0);
   }
   /**
@@ -62,7 +59,7 @@ public class MCache {
    * @param obj The object to store
    * @param timeout The delay in ms
    */
-  public void put(BigInteger id, Object obj, long timeout) {
+  public void put(long id, Object obj, long timeout) {
     // If the system is not functionnal
     if (mem == null) {
       erase();
@@ -82,7 +79,7 @@ public class MCache {
    * @param key The key to search
    * @return The object retrieve, or null if nothing found
    */
-  public Object get(BigInteger key) {
+  public Object get(long key) {
     if (mem.containsKey(key)) {
       return mem.get(key);
     } else {
@@ -104,7 +101,7 @@ public class MCache {
    *
    * @return All objects in the store
    */
-  public Collection<BigInteger> window() {
+  public Collection<Long> window() {
     return mem.keySet();
   }
 
@@ -114,7 +111,7 @@ public class MCache {
    * @param key The key to delete
    * @return The delete value result (true if the object has been found, false in other case)
    */
-  public boolean delete(BigInteger key) {
+  public boolean delete(long key) {
     if (mem.containsKey(key)) {
       mem.remove(key);
       return true;
@@ -124,7 +121,7 @@ public class MCache {
 
   /** Empty the memory store */
   public void erase() {
-    mem = new HashMap<BigInteger, Object>();
+    mem = new HashMap<Long, Object>();
   }
 
   /** Get occupancy */
