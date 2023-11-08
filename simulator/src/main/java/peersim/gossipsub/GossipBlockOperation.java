@@ -30,7 +30,7 @@ public class GossipBlockOperation extends FindOperation {
 
     result.put("id", this.operationId);
     result.put("src", this.srcNode);
-    result.put("type", "ValidatorSamplingOperation");
+    result.put("type", "BlockGossipOperation");
     result.put("messages", getMessagesString());
     result.put("start", this.timestamp);
     result.put("completion_time", this.stopTime);
