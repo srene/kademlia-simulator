@@ -551,6 +551,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         Message msg = Message.makeMessage((String) m.body, mCache.get(id));
         msg.src = this.node;
         msg.dst = m.src;
+        msg.setSize(GossipCommonConfig.BLOCK_SIZE);
         msg.publisher = ((Block) msg.value).getPublisher();
         long cid = ((Block) msg.value).getId();
 
@@ -589,6 +590,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
       for (BigInteger id : nodesToSend) {
 
         Message msg = Message.makeMessage(topic, b);
+        msg.setSize(GossipCommonConfig.BLOCK_SIZE);
         msg.src = this.node;
         msg.publisher = this.node;
         msg.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(gossipid)).getGossipNode();

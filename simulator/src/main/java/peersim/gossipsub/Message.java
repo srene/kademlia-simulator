@@ -166,6 +166,7 @@ public class Message extends SimpleEvent {
     dolly.value = this.value;
     dolly.nrHops = this.nrHops;
     dolly.publisher = this.publisher;
+    dolly.size = this.size;
     return dolly;
   }
 

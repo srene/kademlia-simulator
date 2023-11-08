@@ -42,6 +42,10 @@ public interface Node extends Fallible, Cloneable {
    */
   public Protocol getProtocol(int i);
 
+  public int getBandwidth();
+
+  public void setBandwidth(int bandwidth);
+
   /**
    * Sets the <code>i</code>-th protocol in this node. If <code>i</code> is not a valid protocol id
    * (negative or larger than or equal to the number of protocols), then it throws

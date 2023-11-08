@@ -21,6 +21,7 @@ package peersim.transport;
 import peersim.config.*;
 import peersim.core.*;
 import peersim.edsim.*;
+import peersim.gossipsub.Message;
 
 /**
  * Implement a transport layer that reliably delivers messages with a random delay, that is drawn
@@ -60,6 +61,7 @@ public class UniformRandomTransport implements Transport {
   /** Difference between the max and min delay plus one. That is, max delay is min+range-1. */
   protected final long range;
 
+  private long uploadInterfaceBusyUntil;
   // ---------------------------------------------------------------------
   // Initialization
   // ---------------------------------------------------------------------
@@ -95,7 +97,34 @@ public class UniformRandomTransport implements Transport {
    */
   public void send(Node src, Node dest, Object msg, int pid) {
     // avoid calling nextLong if possible
-    long delay = (range == 1 ? min : min + CommonState.r.nextLong(range));
+    long latencydelay = (range == 1 ? min : min + CommonState.r.nextLong(range));
+
+    long transDelay = 0;
+
+    if (msg instanceof Message) {
+      Message message = (Message) msg;
+      if (src.getBandwidth() > 0 && message.getSize() > 0) {
+        transDelay += message.getSize() * 8 * 1.03 / src.getBandwidth() * 1000;
+      }
+    }
+    long timeNow = CommonState.getTime();
+
+    if (this.uploadInterfaceBusyUntil > timeNow) {
+      transDelay += this.uploadInterfaceBusyUntil - timeNow;
+      this.uploadInterfaceBusyUntil += (long) transDelay; // truncated value
+
+    } else {
+      this.uploadInterfaceBusyUntil = timeNow + (long) transDelay; // truncated value
+    }
+
+    if (msg instanceof Message && src.getBandwidth() > 0) {
+      System.out.println(
+          CommonState.getTime() + " Adding latency " + transDelay + " " + latencydelay);
+      System.out.println(
+          CommonState.getTime() + " interface busy " + this.uploadInterfaceBusyUntil);
+    }
+
+    long delay = transDelay + latencydelay;
     EDSimulator.add(delay, msg, dest, pid);
   }
 

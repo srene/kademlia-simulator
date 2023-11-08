@@ -41,6 +41,8 @@ public class CustomDistribution implements peersim.core.Control {
     int numValidators = (int) (Network.size() * validatorRate);
 
     for (int i = 0; i < Network.size(); ++i) {
+
+      Network.get(i).setBandwidth(GossipCommonConfig.BANDWIDTH);
       BigInteger id;
       // BigInteger attackerID = null;
       GossipNode node;
