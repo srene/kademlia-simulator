@@ -55,6 +55,8 @@ public class GeneralNode implements Node {
   /** The DASProtocol instance that this node is running. */
   private DASProtocol dasProtocol;
 
+  private int bandwidth;
+
   // ================ constructor and initialization =================
   // =================================================================
 
@@ -70,6 +72,7 @@ public class GeneralNode implements Node {
     CommonState.setNode(this);
     ID = nextID();
     protocol = new Protocol[names.length];
+    bandwidth = 0;
     for (int i = 0; i < names.length; i++) {
       CommonState.setPid(i);
       Protocol p = (Protocol) Configuration.getInstance(names[i]);
@@ -219,5 +222,13 @@ public class GeneralNode implements Node {
   /** Implemented as <code>(int)getID()</code>. */
   public int hashCode() {
     return (int) getID();
+  }
+
+  public int getBandwidth() {
+    return bandwidth;
+  }
+
+  public void setBandwidth(int bandwidth) {
+    this.bandwidth = bandwidth;
   }
 }

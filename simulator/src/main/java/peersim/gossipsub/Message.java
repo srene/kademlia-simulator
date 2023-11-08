@@ -81,6 +81,8 @@ public class Message extends SimpleEvent {
   /** Available to count the number of hops the message did. */
   public int nrHops = 0;
 
+  public int size = 0;
+
   // ______________________________________________________________________________________________
   /**
    * Creates an empty message by using default values (message type = MSG_LOOKUP and <code>
@@ -169,6 +171,14 @@ public class Message extends SimpleEvent {
 
   public void increaseHops() {
     this.nrHops++;
+  }
+
+  public void setSize(int size) {
+    this.size = size;
+  }
+
+  public int getSize() {
+    return size;
   }
 
   public int getHops() {
