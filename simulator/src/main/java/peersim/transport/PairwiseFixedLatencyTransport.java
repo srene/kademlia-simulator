@@ -3,6 +3,7 @@ package peersim.transport;
 import peersim.config.*;
 import peersim.core.*;
 import peersim.edsim.*;
+import peersim.gossipsub.Message;
 
 public final class PairwiseFixedLatencyTransport extends UniformRandomTransport {
 
@@ -11,6 +12,8 @@ public final class PairwiseFixedLatencyTransport extends UniformRandomTransport 
 
   /** Latencies between peers (symmetric). */
   private static long[][] pairwise_lat;
+
+  private long[] uploadInterfaceBusyUntil;
 
   /**
    * String name of the parameter used to configure the minimum latency.
@@ -29,6 +32,11 @@ public final class PairwiseFixedLatencyTransport extends UniformRandomTransport 
     for (int i = 0; i < size; i++) {
       pairwise_lat[i] = new long[i + 1];
     }
+    uploadInterfaceBusyUntil = new long[size];
+    System.out.println("New PairwiseFixedLatencyTransport " + prefix);
+    for (int i = 0; i < size; i++) {
+      uploadInterfaceBusyUntil[i] = 0;
+    }
   }
 
   /**
@@ -36,10 +44,54 @@ public final class PairwiseFixedLatencyTransport extends UniformRandomTransport 
    * nodes.
    */
   public void send(Node src, Node dest, Object msg, int pid) {
-    // avoid calling nextLong if possible
-    long delay = getLatency(src, dest);
 
+    // avoid calling nextLong if possible
+    long latencydelay = getLatency(src, dest);
+
+    double transDelay = 0;
+
+    if (msg instanceof Message) {
+      Message message = (Message) msg;
+      if (src.getBandwidth() > 0 && message.getSize() > 0) {
+        transDelay += (double) message.getSize() * 8 * 1.03 / src.getBandwidth() * 1000;
+        System.out.println(
+            CommonState.getTime()
+                + " Msg size "
+                + message.getSize()
+                + " "
+                + src.getBandwidth()
+                + " "
+                + transDelay
+                + " "
+                + getBusyUntilTime(src));
+      }
+    }
+
+    long timeNow = CommonState.getTime();
+
+    if (transDelay > 0) {
+      if (getBusyUntilTime(src) > timeNow) {
+        /// this.uploadInterfaceBusyUntil += (long) transDelay; // truncated value
+        updateBusyUntilTime(src, getBusyUntilTime(src) + (long) transDelay);
+
+      } else {
+        updateBusyUntilTime(src, timeNow + (long) transDelay);
+      }
+    }
+
+    if (msg instanceof Message && src.getBandwidth() > 0) {
+      System.out.println(
+          CommonState.getTime() + " Adding latency " + transDelay + " " + latencydelay);
+      System.out.println(CommonState.getTime() + " interface busy " + getBusyUntilTime(src));
+    }
+
+    long delay = (long) transDelay + latencydelay;
     EDSimulator.add(delay, msg, dest, pid);
+
+    // avoid calling nextLong if possible
+    // long delay = getLatency(src, dest);
+
+    // EDSimulator.add(delay, msg, dest, pid);
   }
 
   /**
@@ -58,5 +110,15 @@ public final class PairwiseFixedLatencyTransport extends UniformRandomTransport 
       pairwise_lat[sender][receiver] = (range == 1 ? min : min + CommonState.r.nextLong(range));
     }
     return pairwise_lat[sender][receiver];
+  }
+
+  public long getBusyUntilTime(Node src) {
+    int sender = ((int) src.getID()) % size;
+    return this.uploadInterfaceBusyUntil[sender];
+  }
+
+  public void updateBusyUntilTime(Node src, long time) {
+    int sender = ((int) src.getID()) % size;
+    this.uploadInterfaceBusyUntil[sender] = time;
   }
 }

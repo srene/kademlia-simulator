@@ -75,6 +75,7 @@ public class UniformRandomTransport implements Transport {
           prefix + "." + PAR_MAXDELAY,
           "The maximum latency cannot be smaller than the minimum latency");
     range = max - min + 1;
+    uploadInterfaceBusyUntil = 0;
   }
 
   // ---------------------------------------------------------------------
