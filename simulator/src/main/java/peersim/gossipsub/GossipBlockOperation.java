@@ -16,6 +16,10 @@ public class GossipBlockOperation extends FindOperation {
     currentBlock = block;
   }
 
+  public Block getBlock() {
+    return currentBlock;
+  }
+
   public boolean isCompleted() {
     return completed;
   }
@@ -37,7 +41,6 @@ public class GossipBlockOperation extends FindOperation {
     result.put("hops", this.nrHops);
     result.put("num_messages", getMessages().size());
     result.put("block_id", this.currentBlock.getId());
-    result.put("completed", isCompleted());
     return result;
   }
 }

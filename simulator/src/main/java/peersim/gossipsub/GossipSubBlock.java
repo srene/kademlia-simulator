@@ -1,5 +1,6 @@
 package peersim.gossipsub;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -50,10 +51,15 @@ public class GossipSubBlock extends GossipSubProtocol {
    */
   protected void handleInitNewBlock(Message m, int myPid) {
     logger.warning("Init block received");
+    List<Long> toRemove = new ArrayList<>();
     for (GossipBlockOperation sop : samplingOp.values()) {
-      GossipObserver.reportOperation(sop);
+      if (sop.isCompleted()) {
+        GossipObserver.reportOperation(sop);
+        toRemove.add(sop.getId());
+      }
     }
-    samplingOp.clear();
+    for (Long id : toRemove) samplingOp.remove(id);
+    // samplingOp.clear();
 
     startGossipBlockOperation((Block) m.body);
   }
@@ -67,14 +73,25 @@ public class GossipSubBlock extends GossipSubProtocol {
     String topic = (String) m.body;
 
     for (GossipBlockOperation sop : samplingOp.values()) {
-      if (!sop.isCompleted()) {
-        logger.warning("Received message block " + b.getId() + " " + topic + " " + m.getHops());
-        sop.addHops(m.getHops());
-        sop.setStopTime(CommonState.getTime() - sop.getTimestamp());
-      } else {
-        logger.warning("Received extra copy " + b.getId() + " " + topic + " " + m.getHops());
+      if (sop.getBlock().getId() == b.getId()) {
+        if (!sop.isCompleted()) {
+          logger.warning(
+              "Received message block "
+                  + b.getId()
+                  + " "
+                  + topic
+                  + " "
+                  + sop.getHops()
+                  + " "
+                  + sop.getStopTime());
+          sop.addHops(m.getHops());
+          sop.setStopTime(CommonState.getTime() - sop.getTimestamp());
+        } else {
+          logger.warning("Received extra copy " + b.getId() + " " + topic + " " + m.getHops());
+        }
+        sop.addMessage(m.id);
+        sop.elaborateResponse(b);
       }
-      sop.elaborateResponse(b);
     }
 
     super.handleMessage(m, myPid);
