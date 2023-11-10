@@ -89,7 +89,7 @@ public class Sequencer implements Control {
       Block b =
           new Block(
               ID_GENERATOR,
-              GossipCommonConfig.BLOCK_SIZE,
+              BlockPropagationConfig.BLOCK_SIZE,
               ((GossipSubBlock) n.getProtocol(protocol)).getGossipNode());
 
       for (int i = 1; i < Network.size(); i++) {
