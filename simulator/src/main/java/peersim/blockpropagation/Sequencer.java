@@ -1,4 +1,4 @@
-package peersim.gossipsub;
+package peersim.blockpropagation;
 
 import java.math.BigInteger;
 import peersim.config.Configuration;
@@ -7,6 +7,9 @@ import peersim.core.Control;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDSimulator;
+import peersim.gossipsub.GossipCommonConfig;
+import peersim.gossipsub.GossipSubProtocol;
+import peersim.gossipsub.Message;
 
 /**
  * This control generates samples every 5 min that are stored in a single node (builder) and starts
@@ -18,7 +21,7 @@ import peersim.edsim.EDSimulator;
  */
 
 // ______________________________________________________________________________________________
-public class TrafficGenerator implements Control {
+public class Sequencer implements Control {
 
   // ______________________________________________________________________________________________
   /** MSPastry Protocol to act */
@@ -35,7 +38,7 @@ public class TrafficGenerator implements Control {
   private long ID_GENERATOR = 0;
 
   // ______________________________________________________________________________________________
-  public TrafficGenerator(String prefix) {
+  public Sequencer(String prefix) {
 
     GossipCommonConfig.BLOCK_SIZE =
         Configuration.getInt(prefix + "." + PAR_BLK_DIM_SIZE, GossipCommonConfig.BLOCK_SIZE);

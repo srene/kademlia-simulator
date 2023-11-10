@@ -1,6 +1,7 @@
 package peersim.gossipsub;
 
 import java.math.BigInteger;
+import peersim.blockpropagation.GossipSubBlock;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Network;

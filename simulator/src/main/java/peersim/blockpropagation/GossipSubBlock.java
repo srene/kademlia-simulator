@@ -1,4 +1,4 @@
-package peersim.gossipsub;
+package peersim.blockpropagation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,6 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import peersim.core.CommonState;
 import peersim.core.Node;
+import peersim.gossipsub.GossipSubProtocol;
+import peersim.gossipsub.Message;
 import peersim.kademlia.SimpleEvent;
 
 public class GossipSubBlock extends GossipSubProtocol {

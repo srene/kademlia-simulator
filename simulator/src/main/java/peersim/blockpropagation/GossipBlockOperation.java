@@ -1,4 +1,4 @@
-package peersim.gossipsub;
+package peersim.blockpropagation;
 
 import java.math.BigInteger;
 import java.util.HashMap;

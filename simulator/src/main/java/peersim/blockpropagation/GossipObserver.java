@@ -1,4 +1,4 @@
-package peersim.gossipsub;
+package peersim.blockpropagation;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -11,6 +11,7 @@ import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Control;
 import peersim.core.Network;
+import peersim.gossipsub.Message;
 import peersim.kademlia.operations.Operation;
 import peersim.util.IncrementalStats;
 

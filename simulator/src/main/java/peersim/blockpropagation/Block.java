@@ -1,4 +1,6 @@
-package peersim.gossipsub;
+package peersim.blockpropagation;
+
+import peersim.gossipsub.GossipNode;
 
 public class Block {
 

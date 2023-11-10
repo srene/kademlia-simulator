@@ -10,6 +10,8 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import peersim.blockpropagation.Block;
+import peersim.blockpropagation.GossipObserver;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Network;
