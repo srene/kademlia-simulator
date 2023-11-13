@@ -53,6 +53,8 @@ public class Message extends SimpleEvent {
 
   public static final int MSG_INIT_NEW_BLOCK = 10;
 
+  public static final int MSG_INIT_OLD_BLOCK = 11;
+
   // ______________________________________________________________________________________________
   /** This Object contains the body of the message, no matter what it contains */
   public Object body = null;
@@ -216,6 +218,10 @@ public class Message extends SimpleEvent {
 
   public static final Message makeInitNewBlock(Object body) {
     return new Message(MSG_INIT_NEW_BLOCK, body);
+  }
+
+  public static final Message makeInitOldBlock(Object body) {
+    return new Message(MSG_INIT_OLD_BLOCK, body);
   }
 
   public static final Message makeLeaveMessage(Object body) {

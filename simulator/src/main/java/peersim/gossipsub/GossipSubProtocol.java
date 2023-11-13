@@ -553,7 +553,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
   }
 
   private void handleIWant(Message m, int myPid) {
-    logger.info("handleIWant received " + m.body);
+    logger.warning("handleIWant received " + m.body);
     List<Long> ids = (List<Long>) m.value;
     for (long id : ids) {
       if (mCache.get(id) != null) {
@@ -564,7 +564,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         msg.publisher = ((Sample) msg.value).getBlock().getPublisher();
         long cid = ((Sample) msg.value).getId();
 
-        logger.info("sending message iwant " + cid + " " + msg.id + " to " + msg.dst.getId());
+        logger.warning("sending message iwant " + cid + " " + msg.id + " to " + msg.dst.getId());
 
         sendMessage(msg, m.src.getId(), myPid);
       }

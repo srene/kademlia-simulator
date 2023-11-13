@@ -3,7 +3,6 @@ package peersim.transport;
 import peersim.config.*;
 import peersim.core.*;
 import peersim.edsim.*;
-import peersim.gossipsub.GossipSubProtocol;
 import peersim.gossipsub.Message;
 
 public final class PairwiseFixedLatencyTransport extends UniformRandomTransport {
@@ -55,19 +54,19 @@ public final class PairwiseFixedLatencyTransport extends UniformRandomTransport 
       Message message = (Message) msg;
       if (src.getBandwidth() > 0 && message.getSize() > 0) {
         transDelay += (double) message.getSize() * 8 * 1.03 / src.getBandwidth() * 1000;
-        System.out.println(
-            "["
-                + CommonState.getTime()
-                + "]["
-                + ((GossipSubProtocol) src.getProtocol(3)).getGossipNode().getId()
-                + "] Msg size "
-                + message.getSize()
-                + " "
-                + src.getBandwidth()
-                + " "
-                + transDelay
-                + " "
-                + getBusyUntilTime(src));
+        /*System.out.println(
+        "["
+            + CommonState.getTime()
+            + "]["
+            + ((GossipSubProtocol) src.getProtocol(3)).getGossipNode().getId()
+            + "] Msg size "
+            + message.getSize()
+            + " "
+            + src.getBandwidth()
+            + " "
+            + transDelay
+            + " "
+            + getBusyUntilTime(src));*/
       }
     }
 
@@ -86,7 +85,7 @@ public final class PairwiseFixedLatencyTransport extends UniformRandomTransport 
 
     long delay = (long) transDelay + latencydelay;
 
-    if (msg instanceof Message && src.getBandwidth() > 0) {
+    /*if (msg instanceof Message && src.getBandwidth() > 0) {
       System.out.println(
           "["
               + CommonState.getTime()
@@ -105,7 +104,7 @@ public final class PairwiseFixedLatencyTransport extends UniformRandomTransport 
               + ((GossipSubProtocol) src.getProtocol(3)).getGossipNode().getId()
               + "] interface busy "
               + getBusyUntilTime(src));
-    }
+    }*/
 
     EDSimulator.add(delay, msg, dest, pid);
 

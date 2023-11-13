@@ -9,14 +9,16 @@ public class GossipBlockOperation extends FindOperation {
 
   private Block currentBlock;
   private HashMap<Long, Boolean> samples;
+  private boolean old;
 
-  public GossipBlockOperation(BigInteger srcNode, long timestamp, Block block) {
+  public GossipBlockOperation(BigInteger srcNode, long timestamp, Block block, boolean old) {
     super(srcNode, null, timestamp);
     currentBlock = block;
     samples = new HashMap<>();
     for (Sample s : block.getSamples()) {
       samples.put(s.getId(), false);
     }
+    this.old = old;
   }
 
   public Block getBlock() {
@@ -44,6 +46,7 @@ public class GossipBlockOperation extends FindOperation {
     // result.put("messages", getMessagesString());
     result.put("start", this.timestamp);
     result.put("completion_time", this.stopTime);
+    result.put("old_block", old);
     result.put("hops", this.nrHops / samples.size());
     result.put("num_messages", getMessages().size() / samples.size());
     result.put("block_id", this.currentBlock.getId());

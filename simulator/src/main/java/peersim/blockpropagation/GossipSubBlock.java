@@ -38,10 +38,10 @@ public class GossipSubBlock extends GossipSubProtocol {
     return dolly;
   }
 
-  protected void startGossipBlockOperation(Block b) {
+  protected void startGossipBlockOperation(Block b, boolean old) {
 
     GossipBlockOperation op =
-        new GossipBlockOperation(this.getGossipNode().getId(), CommonState.getTime(), b);
+        new GossipBlockOperation(this.getGossipNode().getId(), CommonState.getTime(), b, old);
     samplingOp.put(op.getId(), op);
   }
 
@@ -63,7 +63,14 @@ public class GossipSubBlock extends GossipSubProtocol {
     for (Long id : toRemove) samplingOp.remove(id);
     // samplingOp.clear();
 
-    startGossipBlockOperation((Block) m.body);
+    startGossipBlockOperation((Block) m.body, false);
+  }
+
+  protected void handleInitOldBlock(Message m, int myPid) {
+    logger.warning("Init old block received");
+    // samplingOp.clear();
+
+    startGossipBlockOperation((Block) m.body, true);
   }
 
   protected void handleMessage(Message m, int myPid) {
@@ -130,6 +137,10 @@ public class GossipSubBlock extends GossipSubProtocol {
       case Message.MSG_INIT_NEW_BLOCK:
         m = (Message) event;
         handleInitNewBlock(m, pid);
+        break;
+      case Message.MSG_INIT_OLD_BLOCK:
+        m = (Message) event;
+        handleInitOldBlock(m, pid);
         break;
       case Message.MSG_MESSAGE:
         m = (Message) event;

@@ -195,8 +195,6 @@ public class Turbulence implements Control {
     int count = 0;
     for (int i = 0; i < Network.size(); ++i) if (Network.get(i).isUp()) count++;
 
-    System.out.println("Adding node " + count);
-
     // Get kademlia protocol of new node
     GossipSubBlock newKad = (GossipSubBlock) (newNode.getProtocol(kademliaid));
     newNode.setProtocol(kademliaid, newKad);
@@ -209,6 +207,10 @@ public class Turbulence implements Control {
     sortNet();
 
     BigInteger id = newKad.getGossipNode().getId();
+
+    System.out.println(
+        "[" + CommonState.getTime() + "][" + node.getId() + "][Adding node " + id + " " + count);
+
     // if (i == 0) {
     // System.out.println("Sequencer " + id);
     String topic = "blockChannel";
@@ -217,6 +219,17 @@ public class Turbulence implements Control {
       GossipSubProtocol prot2 = (GossipSubProtocol) n2.getProtocol(kademliaid);
       prot2.getTable().addPeer(topic, id);
     }
+
+    int blocks = (int) CommonState.getTime() / 200;
+    for (int i = 1; i <= blocks; i++) {
+      Block b =
+          new Block(
+              i,
+              BlockPropagationConfig.BLOCK_SIZE,
+              ((GossipSubBlock) Network.get(0).getProtocol(kademliaid)).getGossipNode());
+      EDSimulator.add(0, generateNewBlockMessage(b), newNode, kademliaid);
+    }
+
     EDSimulator.add(0, Message.makeInitJoinMessage(topic), newNode, kademliaid);
 
     return false;
@@ -229,6 +242,8 @@ public class Turbulence implements Control {
     do {
       remove = Network.get(CommonState.r.nextInt(Network.size()));
     } while ((remove == null) || (!remove.isUp()));
+
+    System.out.println("Removing node ");
 
     // Remove node (set its state to DOWN)
     remove.setFailState(Node.DOWN);
@@ -256,5 +271,13 @@ public class Turbulence implements Control {
     }
 
     return false;
+  }
+
+  private Message generateNewBlockMessage(Block b) {
+
+    Message m = Message.makeInitOldBlock(b);
+    m.timestamp = CommonState.getTime();
+
+    return m;
   }
 } // End of class
