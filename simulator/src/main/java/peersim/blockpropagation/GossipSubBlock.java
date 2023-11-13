@@ -68,31 +68,45 @@ public class GossipSubBlock extends GossipSubProtocol {
 
   protected void handleMessage(Message m, int myPid) {
 
-    Block b = (Block) m.value;
+    Sample s = (Sample) m.value;
 
     // Sample[] samples = new Sample[] {s};
 
     String topic = (String) m.body;
 
     for (GossipBlockOperation sop : samplingOp.values()) {
-      if (sop.getBlock().getId() == b.getId()) {
+      if (sop.getBlock().getId() == s.getBlock().getId()) {
+        sop.addMessage(m.id);
         if (!sop.isCompleted()) {
+          sop.addHops(m.getHops());
+          sop.elaborateResponse(s);
           logger.warning(
               "Received message block "
-                  + b.getId()
+                  + s.getId()
+                  + " "
+                  + s.getBlock().getId()
                   + " "
                   + topic
                   + " "
                   + sop.getHops()
                   + " "
-                  + sop.getStopTime());
-          sop.addHops(m.getHops());
-          sop.setStopTime(CommonState.getTime() - sop.getTimestamp());
+                  + sop.getStopTime()
+                  + " "
+                  + sop.isCompleted());
+          if (sop.isCompleted()) {
+            sop.setStopTime(CommonState.getTime() - sop.getTimestamp());
+            logger.warning(
+                "Completed operation "
+                    + s.getBlock().getId()
+                    + " "
+                    + sop.getStopTime()
+                    + " "
+                    + sop.getTimestamp());
+          }
         } else {
-          logger.warning("Received extra copy " + b.getId() + " " + topic + " " + m.getHops());
+          logger.warning(
+              "Received extra copy " + s.getId() + " " + s.getBlock().getId() + " " + m.getHops());
         }
-        sop.addMessage(m.id);
-        sop.elaborateResponse(b);
       }
     }
 

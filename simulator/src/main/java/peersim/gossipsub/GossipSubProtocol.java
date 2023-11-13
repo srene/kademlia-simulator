@@ -10,8 +10,8 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
-import peersim.blockpropagation.Block;
 import peersim.blockpropagation.GossipObserver;
+import peersim.blockpropagation.Sample;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Network;
@@ -105,7 +105,7 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
     fanout = new HashMap<>();
 
     mCache = new MCache();
-    System.out.println("New GossipSubProtocol " + D + " " + D_high + " " + D_low);
+    // System.out.println("New GossipSubProtocol " + D + " " + D_high + " " + D_low);
   }
 
   /**
@@ -560,9 +560,9 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
         Message msg = Message.makeMessage((String) m.body, mCache.get(id));
         msg.src = this.node;
         msg.dst = m.src;
-        msg.setSize(((Block) msg.value).getSize());
-        msg.publisher = ((Block) msg.value).getPublisher();
-        long cid = ((Block) msg.value).getId();
+        msg.setSize(((Sample) msg.value).getSize());
+        msg.publisher = ((Sample) msg.value).getBlock().getPublisher();
+        long cid = ((Sample) msg.value).getId();
 
         logger.info("sending message iwant " + cid + " " + msg.id + " to " + msg.dst.getId());
 
@@ -575,31 +575,31 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
   private void handlePublish(Message m, int myPid) {
 
     String topic = (String) m.body;
-    Block b = (Block) m.value;
+    Sample s = (Sample) m.value;
     logger.warning(
         "Publish message "
             + topic
             + " "
             + mesh.get(topic).size()
             + " "
-            + b.getId()
+            + s.getBlock().getId()
             + " "
             + gossipid);
 
     if (seen.get(topic) == null) seen.put(topic, new ArrayList<Long>());
 
     // BigInteger cid = getValueId(m.value);
-    long cid = b.getId();
+    long cid = s.getId();
     seen.get(topic).add(cid);
-    mCache.put(cid, b);
+    mCache.put(cid, s);
 
     if (mesh.get(topic) != null) {
       HashSet<BigInteger> nodesToSend = mesh.get(topic);
       nodesToSend.remove(this.node.getId());
       for (BigInteger id : nodesToSend) {
 
-        Message msg = Message.makeMessage(topic, b);
-        msg.setSize(b.getSize());
+        Message msg = Message.makeMessage(topic, s);
+        msg.setSize(s.getSize());
         msg.src = this.node;
         msg.publisher = this.node;
         msg.dst = ((GossipSubProtocol) nodeIdtoNode(id).getProtocol(gossipid)).getGossipNode();
@@ -616,14 +616,14 @@ public class GossipSubProtocol implements Cloneable, EDProtocol {
 
     String topic = (String) m.body;
 
-    Block b = (Block) m.value;
-    long cid = b.getId();
+    Sample s = (Sample) m.value;
+    long cid = s.getId();
 
     if (seen.get(topic) == null) seen.put(topic, new ArrayList<Long>());
     if (seen.get(topic).contains(cid)) return;
     seen.get(topic).add(cid);
 
-    mCache.put(cid, b);
+    mCache.put(cid, s);
     logger.warning(
         "handleMessage received "
             + topic

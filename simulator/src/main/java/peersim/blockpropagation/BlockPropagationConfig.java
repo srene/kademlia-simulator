@@ -9,7 +9,8 @@ package peersim.blockpropagation;
  */
 public class BlockPropagationConfig {
 
-  public static int BLOCK_SIZE = 500000;
+  public static int BLOCK_SIZE = 512 * 1024;
+  public static int SAMPLE_SIZE = 512;
 
   /**
    * Provides short information about current Kademlia configuration

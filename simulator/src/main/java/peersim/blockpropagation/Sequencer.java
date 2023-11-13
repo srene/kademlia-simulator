@@ -7,7 +7,6 @@ import peersim.core.Control;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDSimulator;
-import peersim.gossipsub.GossipCommonConfig;
 import peersim.gossipsub.GossipSubProtocol;
 import peersim.gossipsub.Message;
 
@@ -27,7 +26,9 @@ public class Sequencer implements Control {
   /** MSPastry Protocol to act */
   private static final String PAR_PROT = "protocol";
 
-  final String PAR_BLK_DIM_SIZE = "block_size";
+  final String PAR_BLK_SIZE = "block_size";
+
+  final String PAR_SAMPLE_SIZE = "sample_size";
 
   int mapfn;
 
@@ -40,9 +41,11 @@ public class Sequencer implements Control {
   // ______________________________________________________________________________________________
   public Sequencer(String prefix) {
 
-    GossipCommonConfig.BLOCK_SIZE =
-        Configuration.getInt(prefix + "." + PAR_BLK_DIM_SIZE, GossipCommonConfig.BLOCK_SIZE);
+    BlockPropagationConfig.BLOCK_SIZE =
+        Configuration.getInt(prefix + "." + PAR_BLK_SIZE, BlockPropagationConfig.BLOCK_SIZE);
 
+    BlockPropagationConfig.SAMPLE_SIZE =
+        Configuration.getInt(prefix + "." + PAR_SAMPLE_SIZE, BlockPropagationConfig.SAMPLE_SIZE);
     protocol = Configuration.getPid(prefix + "." + PAR_PROT);
   }
 
@@ -98,7 +101,9 @@ public class Sequencer implements Control {
       }
 
       String topic = "blockChannel";
-      EDSimulator.add(0, Message.makePublishMessage(topic, b), n, protocol);
+      for (Sample s : b.getSamples())
+        EDSimulator.add(0, Message.makePublishMessage(topic, s), n, protocol);
+
       System.out.println(
           "Sending block "
               + b.getId()

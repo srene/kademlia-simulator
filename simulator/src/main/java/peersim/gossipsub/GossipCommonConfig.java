@@ -21,8 +21,6 @@ public class GossipCommonConfig {
 
   public static int ttl = 36000;
 
-  public static int BLOCK_SIZE = 500000;
-
   public static int BANDWIDTH = 100000000;
   /**
    * Provides short information about current Kademlia configuration
