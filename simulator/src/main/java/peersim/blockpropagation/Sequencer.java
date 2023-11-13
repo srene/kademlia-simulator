@@ -87,13 +87,20 @@ public class Sequencer implements Control {
 
     } else /*if (second)*/ {
 
-      Node n = Network.get(0);
+      Node seq = Network.get(0);
 
+      for (int i = 1; i < Network.size(); i++) {
+        GossipSubBlock s = (GossipSubBlock) Network.get(i).getProtocol(protocol);
+        if (s.isValidator()) {
+          seq = Network.get(i);
+          break;
+        }
+      }
       Block b =
           new Block(
               ID_GENERATOR,
               BlockPropagationConfig.BLOCK_SIZE,
-              ((GossipSubBlock) n.getProtocol(protocol)).getGossipNode());
+              ((GossipSubBlock) seq.getProtocol(protocol)).getGossipNode());
 
       for (int i = 1; i < Network.size(); i++) {
         Node n2 = Network.get(i);
@@ -102,13 +109,13 @@ public class Sequencer implements Control {
 
       String topic = "blockChannel";
       for (Sample s : b.getSamples())
-        EDSimulator.add(0, Message.makePublishMessage(topic, s), n, protocol);
+        EDSimulator.add(0, Message.makePublishMessage(topic, s), seq, protocol);
 
       System.out.println(
           "Sending block "
               + b.getId()
               + " from "
-              + ((GossipSubBlock) n.getProtocol(protocol)).getGossipNode().getId()
+              + ((GossipSubBlock) seq.getProtocol(protocol)).getGossipNode().getId()
               + " at "
               + CommonState.getTime());
       /*for (int i = 0; i < GossipCommonConfig.BLOCK_DIM_SIZE; i++) {

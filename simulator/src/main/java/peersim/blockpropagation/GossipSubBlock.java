@@ -155,4 +155,8 @@ public class GossipSubBlock extends GossipSubProtocol {
   public void setValidator(boolean isValidator) {
     this.isValidator = isValidator;
   }
+
+  public boolean isValidator() {
+    return isValidator;
+  }
 }

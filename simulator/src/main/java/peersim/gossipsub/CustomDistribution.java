@@ -39,8 +39,6 @@ public class CustomDistribution implements peersim.core.Control {
   public boolean execute() {
     // BigInteger tmp;
 
-    int numValidators = (int) (Network.size() * validatorRate);
-
     for (int i = 0; i < Network.size(); ++i) {
 
       Network.get(i).setBandwidth(GossipCommonConfig.BANDWIDTH);
@@ -54,7 +52,7 @@ public class CustomDistribution implements peersim.core.Control {
 
       GossipSubProtocol gossipProt = ((GossipSubProtocol) (Network.get(i).getProtocol(protocolID)));
 
-      if (i < numValidators) {
+      if (i == 0) {
         ((GossipSubBlock) gossipProt).setValidator(true);
       }
       gossipProt.setNode(node);

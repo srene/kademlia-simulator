@@ -239,9 +239,11 @@ public class Turbulence implements Control {
   public boolean rem() {
     // Select one random node to remove
     Node remove;
+    GossipSubBlock gossipSubBlock;
     do {
       remove = Network.get(CommonState.r.nextInt(Network.size()));
-    } while ((remove == null) || (!remove.isUp()));
+      gossipSubBlock = (GossipSubBlock) remove.getProtocol(kademliaid);
+    } while ((remove == null) || (!remove.isUp() || gossipSubBlock.isValidator()));
 
     System.out.println("Removing node ");
 
